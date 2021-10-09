@@ -8,7 +8,8 @@ contains
         type(atm_t), intent(inout) :: reference, esm
 
         call reference%init(filenames=["erai.nc"],          &
-                            varnames=["qv","theta"],        &
+                            varnames=[character(len=1024) ::&
+                                      "qv","theta"],        &
                             z_name="z",                     &
                             lat_name="lat",                 &
                             lon_name="lon",                 &
@@ -20,7 +21,8 @@ contains
 
         ! initialize the ESM dataset
         call esm%init(      filenames=["esm.nc"],           &
-                            varnames=["qv","theta"],        &
+                            varnames=[character(len=1024) ::&
+                                      "qv","theta"],        &
                             z_name="z",                     &
                             lat_name="lat",                 &
                             lon_name="lon",                 &

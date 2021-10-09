@@ -1,12 +1,13 @@
 program esm_bias_correction
 
-    use atmosphere_dataset, only :: atm_t
-    use initialization, only :: init
+    use atmosphere_dataset, only : atm_t
+    use initialization, only : init
 
     implicit none
 
     type(atm_t) :: reference
     type(atm_t) :: esm
+    integer :: v
 
     ! initialize datasets, read in lat / lon, set up file and variable names
     call init(reference, esm)
