@@ -7,7 +7,8 @@ contains
         implicit none
         type(atm_t), intent(inout) :: reference, esm
 
-        call reference%init(filenames=["erai.nc"],          &
+        call reference%init(filenames=[character(len=1024)::&
+                                      "erai.nc"],           &
                             varnames=[character(len=1024) ::&
                                       "qv","theta"],        &
                             z_name="z",                     &
@@ -20,7 +21,8 @@ contains
                             cor_end="2005-01-01 00:00:00")
 
         ! initialize the ESM dataset
-        call esm%init(      filenames=["esm.nc"],           &
+        call esm%init(      filenames=[character(len=1024)::&
+                                      "esm.nc"],            &
                             varnames=[character(len=1024) ::&
                                       "qv","theta"],        &
                             z_name="z",                     &

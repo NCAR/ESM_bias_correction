@@ -85,15 +85,18 @@ contains
         ! read the dimensions of all variables from the first file
         ! if the data are 4-d variable (x, y, z, t) store the third dimension size as nlevels
         ! this is primarily to handle 2D vs 3D variables
-        allocate(this%nlevels(len(varnames)))
-        do i=1, len(varnames)
-            call io_getdims(filenames(1), varnames(i), dims)
+        allocate(this%nlevels(size(varnames)))
+
+        do i=1, size(varnames)
+            call io_getdims(trim(filenames(1)), trim(varnames(i)), dims)
+            print*, trim(varnames(i)), dims(1:5)
             if (dims(1) > 3) then
                 this%nlevels(i) = dims(4)
             else
                 this%nlevels(i) = 1
             endif
         enddo
+        print*, this%nlevels
 
     end subroutine init
 
@@ -103,8 +106,8 @@ contains
         class(atm_t), intent(inout) :: this
 
 
-        call io_read(this%filenames(1), this%lat_name, this%lat)
-        call io_read(this%filenames(1), this%lon_name, this%lon)
+        call io_read(trim(this%filenames(1)), trim(this%lat_name), this%lat)
+        call io_read(trim(this%filenames(1)), trim(this%lon_name), this%lon)
 
         if (size(this%lat, 2) == 1) then
             ! lat and lon data were provided in one-d
