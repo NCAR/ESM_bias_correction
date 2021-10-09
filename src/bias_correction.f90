@@ -1,4 +1,4 @@
-program bias_correction
+program esm_bias_correction
 
     use atmosphere_dataset, only :: atm_t
     use initialization, only :: init
@@ -20,4 +20,4 @@ program bias_correction
         call esm%apply_bc(v)
     enddo
 
-end program bias_correction
+end program esm_bias_correction
