@@ -1,11 +1,15 @@
 module initialization
     use atmosphere_dataset, only: atm_t
+    use output_dataset,     only: output_t
+    use constants
+
     implicit none
 
 contains
-    subroutine init(reference, esm)
+    subroutine init(reference, esm, output)
         implicit none
         type(atm_t), intent(inout) :: reference, esm
+        type(output_t), intent(inout) :: output
 
         call reference%init(filenames=[character(len=1024)::&
                                       "erai.nc"],           &
@@ -33,6 +37,9 @@ contains
                             ref_end="2003-01-01 00:00:00",  &
                             cor_start="2004-01-01 00:00:00",&
                             cor_end="2005-01-01 00:00:00")
+
+
+        call output%init("output.nc", [12, 10, 8], ["  x", "  y", "lev"])
 
 
     end subroutine init

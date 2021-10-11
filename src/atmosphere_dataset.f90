@@ -2,6 +2,7 @@ module atmosphere_dataset
 
     use constants, only: dp, kMAX_VARNAME_LENGTH, kMAX_FILE_LENGTH
     use io_routines, only: io_read, io_write, io_getdims, io_maxDims
+    use output_dataset, only: output_t
     ! use time_periods, only: time_period_data_t
     ! use time_obj, only: time_t
     ! use qm_obj, only: qm_transform
@@ -202,10 +203,12 @@ contains
     end subroutine generate_bc_with
 
 
-    subroutine apply_bc(this, var_index)
+    subroutine apply_bc(this, var_index, output)
         implicit none
         class(atm_t), intent(inout) :: this
         integer, intent(in) :: var_index
+        type(output_t), intent(inout) :: output
+
         character(len=kMAX_VARNAME_LENGTH) :: varname
 
         varname = this%varnames(var_index)
@@ -216,7 +219,7 @@ contains
         ! do i=1, this%correction%n_timesteps
             ! temp_data = this%correction%next(varname)
             ! call qm%apply(temp_data)
-            ! this%output%write(temp_data)
+            ! this%output%write(varname, temp_data)
         ! enddo
 
     end subroutine apply_bc
