@@ -1,0 +1,8 @@
+*.mod
+*.o
+*.i
+*.smod
+*.nc
+esm_bias_correction
+*.dSYM
+*.plist

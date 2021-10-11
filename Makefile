@@ -20,10 +20,11 @@ SRC=src/constants.f90 \
 	src/initialize.f90 \
 	src/bias_correction.f90
 
-FFLAGS=-g -fbounds-check -fbacktrace -finit-real=nan -ffree-line-length-none -ffpe-trap=invalid
+FFLAGS=-g -fbounds-check -fbacktrace -finit-real=nan -ffree-line-length-none -ffpe-trap=invalid -J build/ -I build/
 
 esm_bias_correction: ${SRC}
 	${FC} ${FFLAGS} $^ -o $@ ${NETCDF_INC} ${NETCDF_LIB}
 
 clean:
-	${RM} *.o *.mod *.smod esm_bias_correction
+	${RM} build/*.o build/*.mod build/*.smod esm_bias_correction
+	${RM} -r esm_bias_correction.dSYM
