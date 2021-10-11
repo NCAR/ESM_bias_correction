@@ -53,6 +53,7 @@ contains
         this%time_variable = time_variable
 
         ! find out how many time steps are in each file
+        !  also track useful data like the number of time steps in each file
         do i=1, size(files)
             call io_getdims(files(i), time_variable, dims)
 
@@ -62,11 +63,11 @@ contains
         ! this%all_timesteps = sum(this%steps_per_file)
         print*, "Number of timesteps found dataset:", this%all_timesteps
 
+
         allocate(this%times(this%all_timesteps))
         file_start = 1
-
-        ! i=1
-        ! print*, trim(time_variable), trim(files(i))
+        ! load the time data into an object variable
+        !  also track useful numbers like the time step at the start of each file
         do i=1, size(files)
             call read_times(files(i), time_variable, times)
 
@@ -200,7 +201,6 @@ contains
         end associate
 
         output_data = this%current(varname)
-        print*, "Data shape read : ",shape(output_data)
     end function next
 
     !>------------------------
