@@ -7,7 +7,7 @@ module atmosphere_dataset
     ! use time_obj, only: time_t
     ! use qm_obj, only: qm_transform
     ! use vertical_interp, only: vinterp_t
-    ! use geographic, only: geo_transform
+    use geographic, only: geo_transform
     implicit none
 
     type atm_t
@@ -26,7 +26,7 @@ module atmosphere_dataset
         type(time_period_data_t) :: reference
         type(time_period_data_t) :: correction
         ! type(qm_transform) :: qm
-        ! type(geo_transform), target :: geo
+        type(geo_transform), pointer :: geo
         ! type(vinterp_t) :: vLUT
 
         character(len=kMAX_FILE_LENGTH), DIMENSION(:), ALLOCATABLE :: filenames
@@ -62,6 +62,7 @@ contains
         ! store primary dataset information in object variables
         this%filenames = filenames
         this%varnames = varnames
+        this%n_variables = size(varnames)
 
         this%z_name = z_name
         this%lat_name = lat_name
@@ -74,10 +75,10 @@ contains
         ! initialize the reference and correction time periods
         ! for the reference dataset, the correction period doesnt matter
         call this%reference%init(filenames, time_name)
-        ! call this%reference%find_period(ref_start, ref_end)
+        call this%reference%find_period(ref_start, ref_end)
 
         call this%correction%init(filenames, time_name)
-        ! call this%correction%find_period(cor_start, cor_end)
+        call this%correction%find_period(cor_start, cor_end)
 
         ! initialize the vertical interpolation by
         ! giving it the information needed to read the vertical coordinate
@@ -90,14 +91,14 @@ contains
 
         do i=1, size(varnames)
             call io_getdims(trim(filenames(1)), trim(varnames(i)), dims)
-            print*, trim(varnames(i)), dims(1:5)
+            print*, trim(varnames(i)), " has n-dimensions: ", dims(1)
             if (dims(1) > 3) then
                 this%nlevels(i) = dims(4)
             else
                 this%nlevels(i) = 1
             endif
         enddo
-        print*, this%nlevels
+        print*, "Number of levels in each variable: ", this%nlevels
 
     end subroutine init
 
@@ -118,7 +119,8 @@ contains
         this%nlon = size(this%lat,1)
         this%nlat = size(this%lat,2)
 
-        ! call this%geo%init(this%lat, this%lon)
+        allocate(this%geo)
+        call this%geo%init(this%lat, this%lon)
 
     end subroutine initialize_geo_data
 
@@ -130,10 +132,11 @@ contains
 
         real, DIMENSION(:,:,:), ALLOCATABLE :: temp_data, z
 
-        if (allocated(this%data)) deallocate(this%data)
-        ! allocate(this%data(this%nlon, this%nlat, this%nlevels(variable_index), this%reference%n_timesteps))
-        this%data = 0
+        print*, "load_reference_period"
 
+        if (allocated(this%data)) deallocate(this%data)
+        allocate(this%data(this%nlon, this%nlat, this%nlevels(variable_index), this%reference%n_timesteps))
+        this%data = 0
         allocate(z(this%nlon, this%nlat, size(this%z_data, 3)))
 
         allocate(temp_data(this%nlon, this%nlat, this%nlevels(variable_index)))
@@ -155,16 +158,19 @@ contains
         integer :: i
 
         if (allocated(this%z_data)) deallocate(this%z_data)
+
         allocate(this%z_data(this%nlon, this%nlat, maxval(this%nlevels)))
         this%z_data = 0
 
-        ! call this%reference%reset_counter()
-        ! do i=1, this%reference%n_timesteps
-        !     this%z_data = this%z_data + this%reference%next(this%z_name)
-        ! enddo
-        !
-        ! this%z_data = this%z_data / this%reference%n_timesteps
+        call this%reference%reset_counter()
+        do i=1, this%reference%n_timesteps
+            print*, i, this%reference%n_timesteps
+            this%z_data = this%z_data + this%reference%next(this%z_name)
+        enddo
 
+        this%z_data = this%z_data / this%reference%n_timesteps
+
+        print*, this%z_data(1,1,:)
     end subroutine generate_means
 
 
@@ -176,11 +182,11 @@ contains
 
         ! generate the geographic lookup table to transform this dataset to the reference dataset
         ! call this%geo%geo_LUT(ref_dataset%geo)
-
+        print*, "in: generate_mean_calculations_for"
         if (.not.allocated(ref_dataset%z_data)) call ref_dataset%generate_means()
-
         ! call this%vLUT%set_z(ref_dataset%z_data)
         ! call this%generate_means()
+        print*, "exit: generate_mean_calculations_for"
 
     end subroutine generate_mean_calculations_for
 
@@ -192,6 +198,7 @@ contains
         integer, intent(in) :: variable_index
 
 
+        print*, "in: generate_bc_with", variable_index
 
         ! this%reference%set_geo_transform(this%geo)
 
@@ -211,6 +218,7 @@ contains
 
         character(len=kMAX_VARNAME_LENGTH) :: varname
 
+        print*, var_index
         varname = this%varnames(var_index)
         print*, trim(varname)
         ! this%correction%set_geo_transform(this%geo)

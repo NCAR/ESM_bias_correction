@@ -18,8 +18,11 @@ program esm_bias_correction
     call esm%generate_mean_calculations_for(reference)
 
     do v = 1, esm%n_variables
+
+        print*, "call esm%generate_bc_with", v
         call esm%generate_bc_with(reference, v)
 
+        print*, "call esm%apply_bc(v, output)"
         call esm%apply_bc(v, output)
     enddo
 
