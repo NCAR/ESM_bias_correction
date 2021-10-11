@@ -1,7 +1,7 @@
 module time_io
 
-    use data_structures
-    use icar_constants
+    ! use data_structures
+    use constants
     use time_object,        only : Time_type
     use time_delta_object,  only : time_delta_t
     use string,             only : get_integer
@@ -190,7 +190,7 @@ contains
         call io_read_attribute(trim(filename),"calendar", calendar, var_name=trim(varname), error=error)
         ! if time attribute it not present, set calendar to one specified in the config file
         if (error/=0) then
-            if (this_image()==1) write(*,*) "WARNING: assuming standard/gregorian calendar for file "//trim(filename)
+            write(*,*) "WARNING: assuming standard/gregorian calendar for file "//trim(filename)
             calendar = "standard"
         endif
 

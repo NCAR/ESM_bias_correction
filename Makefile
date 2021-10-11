@@ -8,6 +8,11 @@ NETCDF_INC=-I${NETCDF}/include
 # SRC=src/*.f90
 SRC=src/constants.f90 \
 	src/io_routines.f90 \
+	src/string.f90 \
+	src/time_delta_obj.f90 \
+	src/time_h.f90 \
+	src/time_obj.f90 \
+	src/time_io.f90 \
 	src/output_dataset.f90 \
 	src/geographic_interpolation.f90 \
 	src/time_period.f90 \

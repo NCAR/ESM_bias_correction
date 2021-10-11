@@ -12,12 +12,13 @@
 !!------------------------------------------------------------
 module time_object
     use time_delta_object, only : time_delta_t
+    use constants, only : MAXSTRINGLENGTH
 
     implicit none
 
     private
 
-    integer, parameter :: MAXSTRINGLENGTH = 1024
+    ! integer, parameter :: MAXSTRINGLENGTH = 1024
     integer, parameter, public :: GREGORIAN=0, NOLEAP=1, THREESIXTY=2, NOCALENDAR=-1
     integer, parameter, public :: NON_VALID_YEAR = -9999
 
@@ -50,7 +51,7 @@ module time_object
         procedure, public  :: as_string   => as_string
         procedure, public  :: equals      => equals_with_precision
         procedure, public  :: units       => units
-        procedure, public  :: broadcast   => bcast
+        ! procedure, public  :: broadcast   => bcast
 
         generic,   public  :: init        => time_init_c
         generic,   public  :: init        => time_init_i
@@ -279,14 +280,14 @@ interface
 
     end function units
 
-    module subroutine bcast(this, source, first_image, last_image)
-        implicit none
-        class(Time_type), intent(inout) :: this
-        integer,          intent(in)    :: source
-        integer,          intent(in)    :: first_image
-        integer,          intent(in)    :: last_image
-
-    end subroutine
+    ! module subroutine bcast(this, source, first_image, last_image)
+    !     implicit none
+    !     class(Time_type), intent(inout) :: this
+    !     integer,          intent(in)    :: source
+    !     integer,          intent(in)    :: first_image
+    !     integer,          intent(in)    :: last_image
+    !
+    ! end subroutine
 
 
     !>------------------------------------------------------------

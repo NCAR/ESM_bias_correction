@@ -6,6 +6,6 @@ module constants
 
     integer, PARAMETER :: kMAX_FILE_LENGTH = 1024
     integer, PARAMETER :: kMAX_VARNAME_LENGTH = 1024
-
+    integer, PARAMETER :: MAXSTRINGLENGTH = 1024
 
 end module constants

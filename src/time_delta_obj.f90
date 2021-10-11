@@ -11,7 +11,7 @@
 !!
 !!------------------------------------------------------------
 module time_delta_object
-    use icar_constants, only : MAXSTRINGLENGTH
+    use constants, only : MAXSTRINGLENGTH
 
     implicit none
     private
