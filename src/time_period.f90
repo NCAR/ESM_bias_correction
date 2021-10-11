@@ -1,4 +1,5 @@
 module time_periods
+    use constants
     use geographic, only: geo_transform
 
     type time_period_data_t
@@ -11,7 +12,10 @@ module time_periods
         ! keep a netcdf fileID for the reference data so we don't keep re-opening and closing the netcdf file?
         integer :: ncid
 
-        type(geo_transform), pointer, geo
+        character(len=kMAX_FILE_LENGTH), allocatable, DIMENSION(:) :: files
+        character(len=kMAX_VARNAME_LENGTH) :: time_variable
+
+        type(geo_transform), pointer :: geo
 
     contains
         procedure, public  :: init => init
@@ -24,27 +28,45 @@ module time_periods
     end type time_period_data_t
 
 
-
-    subroutine find_period
+contains
+    subroutine init(this, files, time_variable)
         implicit none
+        class(time_period_data_t), intent(inout) :: this
+        character(len=*), INTENT(IN) :: files(:)
+        character(len=*), INTENT(IN) :: time_variable
+
+        ! allocate(this%files(size(files)))
+        this%files = files
+        this%time_variable = time_variable
+
+    end subroutine init
+
+
+    subroutine find_period(this, start_time, end_time)
+        implicit none
+        class(time_period_data_t), intent(inout) :: this
+        character(len=*), intent(in) :: start_time, end_time
 
 
     end subroutine find_period
 
-    subroutine next
+    subroutine next(this)
         implicit none
+        class(time_period_data_t), intent(inout) :: this
 
 
     end subroutine next
 
-    subroutine current
+    subroutine current(this)
         implicit none
+        class(time_period_data_t), intent(inout) :: this
 
 
     end subroutine current
 
-    subroutine reset_counter
+    subroutine reset_counter(this)
         implicit none
+        class(time_period_data_t), intent(inout) :: this
 
 
     end subroutine reset_counter
@@ -52,17 +74,11 @@ module time_periods
     subroutine set_geo_transform(this, geo)
         implicit none
         class(time_period_data_t), intent(inout) :: this
-        type(geo_transform), intent(inout) :: geo
+        type(geo_transform), target, intent(inout) :: geo
 
         this%geo => geo
 
     end subroutine set_geo_transform
-
-
-    ! call this%reference%reset_counter()
-    ! do i=1, this%reference%n_timesteps
-    !     this%z_data = this%z_data + this%reference%next(this%z_name)
-    ! enddo
 
 
 end module time_periods

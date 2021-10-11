@@ -10,6 +10,7 @@ SRC=src/constants.f90 \
 	src/io_routines.f90 \
 	src/output_dataset.f90 \
 	src/geographic_interpolation.f90 \
+	src/time_period.f90 \
 	src/atmosphere_dataset.f90 \
 	src/initialize.f90 \
 	src/bias_correction.f90

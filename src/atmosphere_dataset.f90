@@ -3,7 +3,7 @@ module atmosphere_dataset
     use constants, only: dp, kMAX_VARNAME_LENGTH, kMAX_FILE_LENGTH
     use io_routines, only: io_read, io_write, io_getdims, io_maxDims
     use output_dataset, only: output_t
-    ! use time_periods, only: time_period_data_t
+    use time_periods, only: time_period_data_t
     ! use time_obj, only: time_t
     ! use qm_obj, only: qm_transform
     ! use vertical_interp, only: vinterp_t
@@ -23,8 +23,8 @@ module atmosphere_dataset
         ! store the latitude and longitude coordinates
         real, dimension(:,:), allocatable :: lat, lon
 
-        ! type(time_period_data_t) :: reference
-        ! type(time_period_data_t) :: correction
+        type(time_period_data_t) :: reference
+        type(time_period_data_t) :: correction
         ! type(qm_transform) :: qm
         ! type(geo_transform), target :: geo
         ! type(vinterp_t) :: vLUT
@@ -73,10 +73,10 @@ contains
 
         ! initialize the reference and correction time periods
         ! for the reference dataset, the correction period doesnt matter
-        ! call this%reference%init(filenames, time_name)
+        call this%reference%init(filenames, time_name)
         ! call this%reference%find_period(ref_start, ref_end)
 
-        ! call this%correction%init(filenames, time_name)
+        call this%correction%init(filenames, time_name)
         ! call this%correction%find_period(cor_start, cor_end)
 
         ! initialize the vertical interpolation by
