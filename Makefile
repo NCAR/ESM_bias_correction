@@ -15,6 +15,7 @@ SRC=src/constants.f90 \
 	src/time_obj.f90 \
 	src/time_io.f90 \
 	src/output_dataset.f90 \
+	src/geo_reader.f90 \
 	src/geographic_interpolation.f90 \
 	src/vinterp.f90 \
 	src/vertical_interpolation.f90 \

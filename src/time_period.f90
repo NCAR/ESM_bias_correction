@@ -214,12 +214,18 @@ contains
         implicit none
         class(time_period_data_t), intent(inout) :: this
         character(len=*), intent(in) :: varname
-        real, DIMENSION(:,:,:), ALLOCATABLE :: output_data
+        real, DIMENSION(:,:,:), ALLOCATABLE :: output_data, input_data
 
         call io_read(this%files(this%file), &
                     varname,                &
-                    output_data,            &
+                    input_data,            &
                     extradim = this%step)
+
+        if (ASSOCIATED(this%geo)) then
+            output_data = this%geo%interpolate(input_data)
+        else
+            output_data = input_data
+        endif
 
     end function current
 

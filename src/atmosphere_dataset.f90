@@ -187,7 +187,7 @@ contains
 
 
         ! generate the geographic lookup table to transform this dataset to the reference dataset
-        ! call this%geo%geo_LUT(ref_dataset%geo)
+        call this%geo%setup_geo_LUT(ref_dataset%geo)
         print*, "in: generate_mean_calculations_for"
         if (.not.associated(ref_dataset%z_data)) call ref_dataset%generate_means()
 
@@ -227,18 +227,27 @@ contains
         type(output_t), intent(inout) :: output
 
         character(len=kMAX_VARNAME_LENGTH) :: varname
+        integer :: i
 
-        print*, var_index
+        real, DIMENSION(:,:,:), ALLOCATABLE :: z, temp_data, vinterped_data
+
         varname = this%varnames(var_index)
         print*, trim(varname)
-        ! this%correction%set_geo_transform(this%geo)
+        call this%correction%set_geo_transform(this%geo)
 
-        ! call this%correction%reset_counter()
-        ! do i=1, this%correction%n_timesteps
-            ! temp_data = this%correction%next(varname)
+        call this%correction%reset_counter()
+        do i=1, this%correction%n_timesteps
+            z = this%correction%next( this%z_name)
+            temp_data = this%correction%current(varname)
+
+            call this%vLUT%vinterp(z, temp_data, vinterped_data)
+
+            this%data(:,:,:,i) = vinterped_data
+
+
             ! call qm%apply(temp_data)
             ! this%output%write(varname, temp_data)
-        ! enddo
+        enddo
 
     end subroutine apply_bc
 

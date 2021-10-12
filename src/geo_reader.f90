@@ -18,7 +18,7 @@
 !!------------------------------------------------------------
 module geo
     use data_structures
-    use icar_constants, only : kMAINTAIN_LON, kDATELINE_CENTERED, kPRIME_CENTERED, kGUESS_LON
+    use constants, only : kMAINTAIN_LON, kDATELINE_CENTERED, kPRIME_CENTERED, kGUESS_LON
 
     implicit none
 
@@ -975,90 +975,6 @@ contains
 
     end subroutine geo_LUT
 
-    !>------------------------------------------------------------
-    !!  Interpolate boundaries of fieldout to fieldin using geolut
-    !!
-    !!------------------------------------------------------------
-    subroutine boundary_interpolate(fieldout, fieldin, geolut)
-        implicit none
-        real,intent(inout)::fieldout(:,:,:)
-        real,intent(in)::fieldin(:,:,:)
-        type(geo_look_up_table),intent(in)::geolut
-        integer::nx,nz,ny
-        integer :: ims,ime,jms,jme,kms,kme
-        integer:: i,j,k,l,localx,localy
-        real::localw
-        real :: local_center
-
-        nx=size(fieldout,1)
-        nz=size(fieldout,2)
-        ny=size(fieldout,3)
-
-        ims = lbound(fieldout,1)
-        ime = ubound(fieldout,1)
-        jms = lbound(fieldout,2)
-        jme = ubound(fieldout,2)
-        kms = lbound(fieldout,3)
-        kme = ubound(fieldout,3)
-
-        ! use the geographic lookup table generated earlier to
-        ! compute a bilinear interpolation from lo to hi
-        ! first loop over all x elements on the y ends
-        do k=kms,kme,ny-1
-            do j=jms,jme
-                do i=ims,ime
-                    fieldout(i,j,k)=0
-                    local_center = 0
-                    do l=1,4
-                        localx=geolut%x(l,i,k)
-                        localy=geolut%y(l,i,k)
-                        local_center = local_center + fieldin(localx,j,localy)
-                        if (l < 3) then
-                            localw=geolut%w(l,i,k)
-                            fieldout(i,j,k) = fieldout(i,j,k) + fieldin(localx,j,localy) * localw
-                        endif
-                    enddo
-                    localw = geolut%w(3,i,k)
-                    fieldout(i,j,k) = fieldout(i,j,k) + local_center/4 * localw
-                    ! fieldout(i,j,k)=0
-                    ! do l=1,4
-                    !     localx=geolut%x(l,i,k)
-                    !     localy=geolut%y(l,i,k)
-                    !     localw=geolut%w(l,i,k)
-                    !     fieldout(i,j,k)=fieldout(i,j,k)+fieldin(localx,j,localy)*localw
-                    ! enddo
-                enddo
-            enddo
-        enddo
-        ! then loop over all y elements on the x ends
-        do k=kms,kme
-            do j=jms,jme
-                do i=ims,ime,nx-1
-                    fieldout(i,j,k)=0
-                    local_center = 0
-                    do l=1,4
-                        localx=geolut%x(l,i,k)
-                        localy=geolut%y(l,i,k)
-                        local_center = local_center + fieldin(localx,j,localy)
-                        if (l < 3) then
-                            localw=geolut%w(l,i,k)
-                            fieldout(i,j,k) = fieldout(i,j,k) + fieldin(localx,j,localy) * localw
-                        endif
-                    enddo
-                    localw = geolut%w(3,i,k)
-                    fieldout(i,j,k) = fieldout(i,j,k) + local_center/4 * localw
-                    ! fieldout(i,j,k)=0
-                    ! do l=1,4
-                    !     localx=geolut%x(l,i,k)
-                    !     localy=geolut%y(l,i,k)
-                    !     localw=geolut%w(l,i,k)
-                    !     fieldout(i,j,k)=fieldout(i,j,k)+fieldin(localx,j,localy)*localw
-                    ! enddo
-                enddo
-            enddo
-        enddo
-
-    end subroutine boundary_interpolate
 
     !>------------------------------------------------------------
     !!  Interpolate fieldout to fieldin using geolut.
@@ -1066,16 +982,14 @@ contains
     !!  loops over y,z,x but geolut is only defined over x,y (for now)
     !!
     !!------------------------------------------------------------
-    subroutine geo_interp(fieldout, fieldin, geolut, boundary_only)
+    subroutine geo_interp(fieldout, fieldin, geolut)
         implicit none
         real,                   intent(inout) :: fieldout(:,:,:)
         real,                   intent(in)    :: fieldin(:,:,:)
         type(geo_look_up_table),intent(in)    :: geolut
-        logical,                intent(in),   optional :: boundary_only
 
         integer :: ims,ime, jms,jme, kms,kme
         integer:: i,j,k,l, localx,localy, nz_input
-        logical :: boundaries
         real :: localw
         real :: local_center
 
@@ -1089,14 +1003,6 @@ contains
 
         nz_input = size(fieldin,2)
 
-        boundaries = .False.
-        if (present(boundary_only)) boundaries = boundary_only
-
-        ! if we are only processing the boundary, then make x and y increments be the size of the array
-        ! so we only hit the edges of the array
-        if (boundaries) then
-            call boundary_interpolate(fieldout, fieldin, geolut)
-        else
         ! use the geographic lookup table generated earlier to
         ! compute a bilinear interpolation from lo to hi
         ! if we are doing the interior too, just iterate over all x and y
@@ -1108,18 +1014,18 @@ contains
                         ! This loop is used if doing a triangular bi-linear interpolation on the grid
                         ! Need to see all 4 points to compute the "local_center" value for the triangulation
                         do l=1,4
-                            localx=geolut%x(l,i,k)
-                            localy=geolut%y(l,i,k)
-                            local_center = local_center + fieldin(localx, min(j,nz_input), localy)
+                            localx=geolut%x(l,i,j)
+                            localy=geolut%y(l,i,j)
+                            local_center = local_center + fieldin(localx, localy, min(k,nz_input))
                             ! This is the actual interpolation adding the value from the two raw grid points
                             if (l < 3) then
 
-                                localw=geolut%w(l,i,k)
-                                fieldout(i,j,k) = fieldout(i,j,k) + fieldin(localx, min(j,nz_input), localy) * localw
+                                localw=geolut%w(l,i,j)
+                                fieldout(i,j,k) = fieldout(i,j,k) + fieldin(localx, localy, min(k,nz_input)) * localw
                             endif
                         enddo
                         ! This is the actual interpolation adding the value from the center average of all four grid points
-                        localw = geolut%w(3,i,k)
+                        localw = geolut%w(3,i,j)
                         fieldout(i,j,k) = fieldout(i,j,k) + local_center/4 * localw
 
                         ! This loop is used if doing a straight bi-linear interpolation on the grid
@@ -1132,7 +1038,6 @@ contains
                     enddo
                 enddo
             enddo
-        endif
     end subroutine geo_interp
 
     !>------------------------------------------------------------
