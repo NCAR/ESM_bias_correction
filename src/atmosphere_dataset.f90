@@ -6,7 +6,7 @@ module atmosphere_dataset
     use time_periods, only: time_period_data_t
     ! use time_obj, only: time_t
     ! use qm_obj, only: qm_transform
-    ! use vertical_interp, only: vinterp_t
+    use vertical_interp, only: vinterp_t
     use geographic, only: geo_transform
     implicit none
 
@@ -17,7 +17,7 @@ module atmosphere_dataset
 
         ! store the reference period mean z coordinate in double precision so that the
         ! accumulation and averaging stage won't have significant precision errors
-        real(kind=dp), dimension(:,:,:), allocatable :: z_data
+        real(kind=dp), dimension(:,:,:), pointer :: z_data
         ! temporary data before developing the QM? (nlon, nlat, nlevels ntimes)
         real, dimension(:,:,:,:), allocatable :: data
         ! store the latitude and longitude coordinates
@@ -27,7 +27,7 @@ module atmosphere_dataset
         type(time_period_data_t) :: correction
         ! type(qm_transform) :: qm
         type(geo_transform), pointer :: geo
-        ! type(vinterp_t) :: vLUT
+        type(vinterp_t) :: vLUT
 
         character(len=kMAX_FILE_LENGTH), DIMENSION(:), ALLOCATABLE :: filenames
         character(len=kMAX_VARNAME_LENGTH), DIMENSION(:), ALLOCATABLE :: varnames
@@ -80,10 +80,6 @@ contains
         call this%correction%init(filenames, time_name)
         call this%correction%find_period(cor_start, cor_end)
 
-        ! initialize the vertical interpolation by
-        ! giving it the information needed to read the vertical coordinate
-        ! call vLUT%init(filenames, z_name)
-
         ! read the dimensions of all variables from the first file
         ! if the data are 4-d variable (x, y, z, t) store the third dimension size as nlevels
         ! this is primarily to handle 2D vs 3D variables
@@ -130,47 +126,57 @@ contains
         class(atm_t), intent(inout) :: this
         integer, intent(in) :: variable_index
 
-        real, DIMENSION(:,:,:), ALLOCATABLE :: temp_data, z
-
-        print*, "load_reference_period"
+        real, DIMENSION(:,:,:), ALLOCATABLE :: temp_data, vinterped_data, z
+        integer :: i
 
         if (allocated(this%data)) deallocate(this%data)
+        print*, "WARNING, need to allocate data as f(nlevels of reference data)"
         allocate(this%data(this%nlon, this%nlat, this%nlevels(variable_index), this%reference%n_timesteps))
         this%data = 0
-        allocate(z(this%nlon, this%nlat, size(this%z_data, 3)))
 
+        allocate(z(this%nlon, this%nlat, size(this%z_data, 3)))
         allocate(temp_data(this%nlon, this%nlat, this%nlevels(variable_index)))
 
+        print*, "loading_reference"
+        print*, trim(this%varnames( variable_index)), this%reference%n_timesteps
 
-        ! call this%reference%reset_counter()
-        ! do i=1, this%reference%n_timesteps
-        !     z = this%reference%next( this%z_name))
-        !     this%data(i,:,:,:) = this%vLUT%interp(z, this%reference%current( this%variables( variable_index)))
-        ! enddo
+        call this%reference%reset_counter()
+        do i=1, this%reference%n_timesteps
+
+            z = this%reference%next( this%z_name)
+
+            temp_data = this%reference%current( this%varnames( variable_index))
+
+            call this%vLUT%vinterp(z, temp_data, vinterped_data)
+
+            this%data(:,:,:,i) = vinterped_data
+        enddo
 
     end subroutine load_reference_period
 
 
+    !>----------------------
+    !> compute the mean vertical location that all other data will be interpolated to.
     subroutine generate_means(this)
         implicit none
         class(atm_t), intent(inout) :: this
 
         integer :: i
 
-        if (allocated(this%z_data)) deallocate(this%z_data)
+        ! if (associated(this%z_data)) then
+        !     if (allocated(this%z_data)) deallocate(this%z_data)
+        ! endif
 
         allocate(this%z_data(this%nlon, this%nlat, maxval(this%nlevels)))
         this%z_data = 0
 
         call this%reference%reset_counter()
         do i=1, this%reference%n_timesteps
-            print*, i, this%reference%n_timesteps
             this%z_data = this%z_data + this%reference%next(this%z_name)
         enddo
 
         this%z_data = this%z_data / this%reference%n_timesteps
 
-        print*, this%z_data(1,1,:)
     end subroutine generate_means
 
 
@@ -183,9 +189,13 @@ contains
         ! generate the geographic lookup table to transform this dataset to the reference dataset
         ! call this%geo%geo_LUT(ref_dataset%geo)
         print*, "in: generate_mean_calculations_for"
-        if (.not.allocated(ref_dataset%z_data)) call ref_dataset%generate_means()
-        ! call this%vLUT%set_z(ref_dataset%z_data)
-        ! call this%generate_means()
+        if (.not.associated(ref_dataset%z_data)) call ref_dataset%generate_means()
+
+        ! initialize the vertical interpolation by
+        ! giving it the information needed to read the vertical coordinate
+        call this%vLUT%set_z(ref_dataset%z_data)
+        call ref_dataset%vLUT%set_z(ref_dataset%z_data)
+
         print*, "exit: generate_mean_calculations_for"
 
     end subroutine generate_mean_calculations_for
@@ -200,7 +210,7 @@ contains
 
         print*, "in: generate_bc_with", variable_index
 
-        ! this%reference%set_geo_transform(this%geo)
+        call this%reference%set_geo_transform(this%geo)
 
         call this%load_reference_period(variable_index)
         call ref_dataset%load_reference_period(variable_index)

@@ -15,14 +15,14 @@ module vertical_interpolation
 
     private
     public vLUT
-    public vLUT_forcing
-    public vinterp
+    public interpolate_vertically
 contains
 
     function weights(zin,ztop,zbot)
         ! Compute weights to interpolate between ztop and zbottom to get to zin
         implicit none
-        real, intent(in) :: zin,ztop,zbot
+        DOUBLE PRECISION, intent(in) :: zin
+        real, intent(in) :: ztop,zbot
         real, dimension(2) :: weights
         real :: zrange
 
@@ -43,7 +43,7 @@ contains
     function find_match(zin,z,guess)
 
         implicit none
-        real, intent(in) :: zin
+        DOUBLE PRECISION, intent(in) :: zin
         real, intent(in),dimension(:) :: z
         integer, optional, intent(inout)::guess
         real,dimension(2) :: find_match
@@ -97,188 +97,90 @@ contains
     ! and the low-resolution grid may actually have more vertical resolution than the hi grid
     !
     ! The output vlut is stored in the "lo-res" forcing data structure (as with geolut)
-    !
-    subroutine vLUT(hi,lo)
-        implicit none
-        type(interpolable_type), intent(in)    :: hi
-        type(interpolable_type), intent(inout) :: lo
-        integer::nx,ny,nz,i,j,k,guess,lo_nz
-        integer,dimension(2) :: curpos
-        real,dimension(2) :: curweights
-
-        nx=size(hi%z,1)
-        nz=size(hi%z,2)
-        ny=size(hi%z,3)
-
-        lo_nz=size(lo%z,2)
-
-        allocate(lo%vert_lut%z(2,nx,nz,ny))
-        allocate(lo%vert_lut%w(2,nx,nz,ny))
-        do j=1,ny
-            do i=1,nx
-                guess=1
-                do k=1,nz
-                    curpos=find_match(hi%z(i,k,j),lo%z(i,:,j),guess=guess)
-                    if (curpos(1)>0) then
-                        ! matched within the grid
-                        curweights=weights(hi%z(i,k,j),lo%z(i,curpos(1),j),lo%z(i,curpos(2),j))
-                    elseif (curpos(1)==-1) then
-                        ! matched below the grid
-                        curpos(1)=1
-                        curpos(2)=1
-                        curweights=0.5
-                    elseif (curpos(1)==-2) then
-                        ! matched above the grid
-                        curpos(1)=lo_nz
-                        curpos(2)=lo_nz
-                        curweights=0.5
-                    else
-                        write(*,*) "find_match Failed to return appropriate position"
-                        write(*,*) " at grid location:"
-                        write(*,*) i,k,j
-                        write(*,*) "z to match = ",hi%z(i,k,j)
-                        write(*,*) "from Z-column="
-                        write(*,*) lo%z(i,:,j)
-                        stop
-                    endif
-
-                    lo%vert_lut%z(:,i,k,j)=curpos
-                    lo%vert_lut%w(:,i,k,j)=curweights
-                    guess=curpos(2)
-                enddo !k=1,z
-            enddo !i=1,x
-        enddo !j=1,y
-
-    end subroutine vLUT
-
-    subroutine vLUT_forcing(hi,lo)
+    subroutine vLUT(hi_z, lo_z, vert_lut)
         ! identical to vLUT above, but for forcing data
         ! only change is that the vertical axis is the last axis
         ! instead of the middle axis
         ! In addition, it provides extrapolation when matching above or below
         ! the previous grid.
         implicit none
-        type(interpolable_type), intent(in)    :: hi
-        type(interpolable_type), intent(inout) :: lo
-        integer::nx,ny,nz,i,j,k,guess,lo_nz
-        integer,dimension(2) :: curpos
-        real,dimension(2) :: curweights
+        DOUBLE PRECISION, DIMENSION(:,:,:), intent(in)    :: hi_z
+        real, DIMENSION(:,:,:), intent(in) :: lo_z
+        type(vert_look_up_table), intent(INOUT) :: vert_lut
 
-        nx=size(hi%z,1)
-        ny=size(hi%z,2)  ! difference from vLUT
-        nz=size(hi%z,3)  ! difference from vLUT
+        integer :: nx, ny, nz, i, j, k, guess, lo_nz
+        integer, dimension(2) :: curpos
+        real, dimension(2) :: curweights
 
-        lo_nz=size(lo%z,3)   ! difference from vLUT
+        nx = size(hi_z, 1)
+        ny = size(hi_z, 2)  ! difference from vLUT
+        nz = size(hi_z, 3)  ! difference from vLUT
 
-        if (allocated(lo%vert_lut%z)) then
-            deallocate(lo%vert_lut%z, lo%vert_lut%w)
-        endif
-        allocate(lo%vert_lut%z(2,nx,ny,nz))   ! difference from vLUT
-        allocate(lo%vert_lut%w(2,nx,ny,nz))   ! difference from vLUT
+        lo_nz = size(lo_z,3)   ! difference from vLUT
+
+        ! if (allocated(vert_lut%z)) deallocate(vert_lut%z)
+        ! if (allocated(vert_lut%w)) deallocate(vert_lut%w)
+
+        ! assumes that if it has been allocated before, we can use the same size again
+        if (.not.allocated(vert_lut%z)) allocate(vert_lut%z(2,nx,ny,nz))   ! difference from vLUT
+        if (.not.allocated(vert_lut%w)) allocate(vert_lut%w(2,nx,ny,nz))   ! difference from vLUT
         do k=1,ny  ! difference from vLUT
             do i=1,nx
                 guess=1
                 do j=1,nz  ! difference from vLUT
 
-                    curpos=find_match(hi%z(i,k,j),lo%z(i,k,:),guess=guess)  ! difference from vLUT
+                    curpos=find_match(hi_z(i,k,j),lo_z(i,k,:),guess=guess)  ! difference from vLUT
                     if (curpos(1)>0) then
                         ! matched within the grid
-                        curweights=weights(hi%z(i,k,j),lo%z(i,k,curpos(1)),lo%z(i,k,curpos(2)))  ! difference from vLUT
+                        curweights = weights(hi_z(i,k,j),lo_z(i,k,curpos(1)),lo_z(i,k,curpos(2)))  ! difference from vLUT
                     elseif (curpos(1)==-1) then
                         ! matched below the grid so we must extrapolate downward.
-                        curpos(1)=1
-                        curpos(2)=2
+                        curpos(1) = 1
+                        curpos(2) = 2
                         ! note that this will be > 1
-                        curweights(1) = (lo%z(i,k,curpos(2))-hi%z(i,k,j)) / (lo%z(i,k,curpos(2))-lo%z(i,k,curpos(1)))
+                        curweights(1) = (lo_z(i,k,curpos(2))-hi_z(i,k,j)) / (lo_z(i,k,curpos(2))-lo_z(i,k,curpos(1)))
                         ! note that this will be < 0 providing a bilinear extrapolation
                         curweights(2) = 1-curweights(1)
                     elseif (curpos(1)==-2) then
                         ! matched above the grid so we must extrapolate upward.
-                        curpos(1)=lo_nz-1
-                        curpos(2)=lo_nz
+                        curpos(1) = lo_nz-1
+                        curpos(2) = lo_nz
                         ! note that this will be > 1
-                        curweights(2) = (hi%z(i,k,j)-lo%z(i,k,curpos(1))) / (lo%z(i,k,curpos(2))-lo%z(i,k,curpos(1)))
+                        curweights(2) = (hi_z(i,k,j)-lo_z(i,k,curpos(1))) / (lo_z(i,k,curpos(2))-lo_z(i,k,curpos(1)))
                         ! note that this will be < 0 providing a bilinear extrapolation
                         curweights(1) = 1-curweights(2)
                     else
                         write(*,*) "find_match Failed to return appropriate position"
                         write(*,*) " at grid location:"
                         write(*,*) i,k,j
-                        write(*,*) "z to match = ",hi%z(i,k,j)
+                        write(*,*) "z to match = ",hi_z(i,k,j)
                         write(*,*) "from Z-column="
-                        write(*,*) lo%z(i,k,:)  ! difference from vLUT
+                        write(*,*) lo_z(i,k,:)  ! difference from vLUT
                         stop
                     endif
-                    lo%vert_lut%z(:,i,k,j)=curpos
-                    lo%vert_lut%w(:,i,k,j)=curweights
-                    guess=curpos(2)
+                    vert_lut%z(:,i,k,j) = curpos
+                    vert_lut%w(:,i,k,j) = curweights
+                    guess = curpos(2)
                 enddo !j=1,z  ! difference from vLUT
             enddo !i=1,x
         enddo !k=1,y  ! difference from vLUT
 
-    end subroutine vLUT_forcing
+    end subroutine vLUT
 
 
-
-    subroutine vinterp_boundary(hi,lo,vlut)
-        implicit none
-        real,dimension(:,:,:), intent(inout) :: hi
-        real,dimension(:,:,:), intent(in)    :: lo
-        type(vert_look_up_table),intent(in) :: vlut
-        integer :: i,j,k,nx,ny,nz
-
-        nx=size(hi,1)
-        nz=size(hi,2)
-        ny=size(hi,3)
-
-        j=1
-        do k=1,nz
-            do i=1,nx
-                hi(i,k,j)=lo(i,vlut%z(1,i,k,j),j)*vlut%w(1,i,k,j) + lo(i,vlut%z(2,i,k,j),j)*vlut%w(2,i,k,j)
-            enddo
-        enddo
-        j=ny
-        do k=1,nz
-            do i=1,nx
-                hi(i,k,j)=lo(i,vlut%z(1,i,k,j),j)*vlut%w(1,i,k,j) + lo(i,vlut%z(2,i,k,j),j)*vlut%w(2,i,k,j)
-            enddo
-        enddo
-
-        i=1
-        do j=1,ny
-            do k=1,nz
-                hi(i,k,j)=lo(i,vlut%z(1,i,k,j),j)*vlut%w(1,i,k,j) + lo(i,vlut%z(2,i,k,j),j)*vlut%w(2,i,k,j)
-            enddo
-        enddo
-        i=nx
-        do j=1,ny
-            do k=1,nz
-                hi(i,k,j)=lo(i,vlut%z(1,i,k,j),j)*vlut%w(1,i,k,j) + lo(i,vlut%z(2,i,k,j),j)*vlut%w(2,i,k,j)
-            enddo
-        enddo
-
-    end subroutine vinterp_boundary
-
-    subroutine vinterp(hi, lo, vlut, boundary_only, axis)
+    subroutine interpolate_vertically(hi, lo, vlut, axis)
         implicit none
         real,dimension(:,:,:),    intent(inout) :: hi
         real,dimension(:,:,:),    intent(in)    :: lo
         type(vert_look_up_table), intent(in)    :: vlut
-        logical, optional,        intent(in)    :: boundary_only
         integer, optional,        intent(in)    :: axis
         integer :: i,j,k, nx,ny,nz, zaxis
 
-        if (present(boundary_only)) then
-            if (boundary_only) then
-                call vinterp_boundary(hi,lo,vlut)
-                return
-            endif
-        endif
 
         if (present(axis)) then
             zaxis=axis
         else
-            zaxis=2
+            zaxis=3
         endif
 
         if (zaxis==2) then
@@ -314,6 +216,6 @@ contains
             error stop
         endif
 
-    end subroutine vinterp
+    end subroutine interpolate_vertically
 
 end module vertical_interpolation
