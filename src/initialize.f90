@@ -19,7 +19,7 @@ contains
                             lat_name="lat",                 &
                             lon_name="lon",                 &
                             time_name="time",               &
-                            ref_start="2000-01-03 00:00:00",&
+                            ref_start="2000-01-01 00:00:00",&
                             ref_end="2000-01-05 00:00:00",  &
                             cor_start="2000-01-01 12:00:00",&
                             cor_end="2000-01-03 00:00:00")
@@ -33,7 +33,7 @@ contains
                             lat_name="lat",                 &
                             lon_name="lon",                 &
                             time_name="time",               &
-                            ref_start="2000-01-03 00:00:00",&
+                            ref_start="2000-01-01 00:00:00",&
                             ref_end="2000-01-05 00:00:00",  &
                             cor_start="2000-01-01 12:00:00",&
                             cor_end="2000-01-03 00:00:00")
