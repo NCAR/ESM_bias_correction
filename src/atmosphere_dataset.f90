@@ -5,7 +5,7 @@ module atmosphere_dataset
     use output_dataset, only: output_t
     use time_periods, only: time_period_data_t
     ! use time_obj, only: time_t
-    use bias_correction_obj, only: qm_transform
+    use bias_correction_obj, only: bc_transform
     use vertical_interp, only: vinterp_t
     use geographic, only: geo_transform
     implicit none
@@ -18,14 +18,14 @@ module atmosphere_dataset
         ! store the reference period mean z coordinate in double precision so that the
         ! accumulation and averaging stage won't have significant precision errors
         real(kind=dp), dimension(:,:,:), pointer :: z_data
-        ! temporary data before developing the QM? (nlon, nlat, nlevels ntimes)
+        ! temporary data before developing the QM (nlon, nlat, nlevels ntimes)
         real, dimension(:,:,:,:), allocatable :: data
         ! store the latitude and longitude coordinates
         real, dimension(:,:), allocatable :: lat, lon
 
         type(time_period_data_t) :: reference
         type(time_period_data_t) :: correction
-        type(qm_transform) :: qm
+        type(bc_transform) :: bc
         type(geo_transform), pointer :: geo
         type(vinterp_t) :: vLUT
 
@@ -218,7 +218,7 @@ contains
         call this%load_reference_period(variable_index)
         call ref_dataset%load_reference_period(variable_index)
 
-        call this%qm%develop(this%data, ref_dataset%data)
+        call this%bc%develop(this%data, ref_dataset%data)
 
     end subroutine generate_bc_with
 
@@ -248,7 +248,7 @@ contains
             this%data(:,:,:,i) = vinterped_data
 
 
-            call this%qm%apply(temp_data)
+            call this%bc%apply(temp_data)
         enddo
         call output%write(varname, this%data)
 
