@@ -15,7 +15,7 @@ time_data = np.arange(nt)/4.0
 
 qv_data = 1 / ((z_data + 1) * 10)
 qv_data = qv_data[np.newaxis,:,:,:].repeat(nt, axis=0)
-th_data = np.zeros((nt, nz,ny,nx))
+th_data = np.zeros((nt, nz,ny,nx))+np.random.rand(nt, nz, ny, nx)+300
 
 
 lat = xr.DataArray(lat_data, name="lat", dims=("y","x",))

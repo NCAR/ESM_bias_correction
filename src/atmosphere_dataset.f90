@@ -246,8 +246,8 @@ contains
 
 
             ! call qm%apply(temp_data)
-            ! this%output%write(varname, temp_data)
         enddo
+        call output%write(varname, this%data)
 
     end subroutine apply_bc
 

@@ -1,5 +1,6 @@
 module output_dataset
-    use netcdf
+    ! use netcdf
+    use io_routines, only: io_write
     use constants
 
     implicit none
@@ -25,13 +26,20 @@ contains
         integer,          dimension(:), intent(in) :: dims
         character(len=*), dimension(:), intent(in) :: dimnames
 
+        this%dims = dims
+        this%dimnames = dimnames
+        this%output_file = output_file
+
     end subroutine init
 
     subroutine write(this, varname, data_array)
         implicit none
         class(output_t), intent(inout) :: this
         character(len=*), intent(in) :: varname
-        real, DIMENSION(:,:,:) :: data_array
+        real, DIMENSION(:,:,:,:) :: data_array
+
+        print*, trim(varname), minval(data_array), maxval(data_array)
+        call io_write(trim(varname)//"_"//trim(this%output_file), varname, data_array)!, this%dimnames)
 
     end subroutine write
 
