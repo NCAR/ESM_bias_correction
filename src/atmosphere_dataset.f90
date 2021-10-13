@@ -5,7 +5,7 @@ module atmosphere_dataset
     use output_dataset, only: output_t
     use time_periods, only: time_period_data_t
     ! use time_obj, only: time_t
-    ! use qm_obj, only: qm_transform
+    use bias_correction_obj, only: qm_transform
     use vertical_interp, only: vinterp_t
     use geographic, only: geo_transform
     implicit none
@@ -25,7 +25,7 @@ module atmosphere_dataset
 
         type(time_period_data_t) :: reference
         type(time_period_data_t) :: correction
-        ! type(qm_transform) :: qm
+        type(qm_transform) :: qm
         type(geo_transform), pointer :: geo
         type(vinterp_t) :: vLUT
 
@@ -68,6 +68,9 @@ contains
         this%lat_name = lat_name
         this%lon_name = lon_name
         this%time_name = time_name
+
+        this%geo => NULL()
+        this%z_data => NULL()
 
         ! initialize the lat/lon data
         call this%initialize_geo_data()
@@ -215,7 +218,7 @@ contains
         call this%load_reference_period(variable_index)
         call ref_dataset%load_reference_period(variable_index)
 
-        ! this%qm%develop(this%data, ref_dataset%data)
+        call this%qm%develop(this%data, ref_dataset%data)
 
     end subroutine generate_bc_with
 
@@ -245,7 +248,7 @@ contains
             this%data(:,:,:,i) = vinterped_data
 
 
-            ! call qm%apply(temp_data)
+            call this%qm%apply(temp_data)
         enddo
         call output%write(varname, this%data)
 

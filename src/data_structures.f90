@@ -50,4 +50,12 @@ module data_structures
         real,   allocatable, dimension(:,:,:,:) :: w
     end type vert_look_up_table
 
+    ! ------------------------------------------------
+    ! type to store quantile mapping data
+    ! ------------------------------------------------
+    type qm_correction_type
+        real, allocatable, dimension(:) :: start_idx, end_idx
+        real, allocatable, dimension(:) :: slope, offset
+    end type qm_correction_type
+
 end module data_structures

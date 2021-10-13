@@ -79,6 +79,8 @@ contains
             file_start = file_end+1
         enddo
 
+        this%geo => NULL()
+
     end subroutine init
 
 

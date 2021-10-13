@@ -10,6 +10,9 @@ SRC=src/constants.f90 \
 	src/data_structures.f90 \
 	src/io_routines.f90 \
 	src/string.f90 \
+	src/sorting.f90 \
+	src/quantile_map_utility.f90 \
+	src/quantile_map.f90 \
 	src/time_delta_obj.f90 \
 	src/time_h.f90 \
 	src/time_obj.f90 \
