@@ -1001,7 +1001,7 @@ contains
         kms = lbound(fieldout,3)
         kme = ubound(fieldout,3)
 
-        nz_input = size(fieldin,2)
+        nz_input = size(fieldin,3)
 
         ! use the geographic lookup table generated earlier to
         ! compute a bilinear interpolation from lo to hi
