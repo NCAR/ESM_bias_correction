@@ -12,7 +12,7 @@ SOURCES  := $(wildcard $(SRCDIR)/*.f90)
 OBJECTS  := $(SOURCES:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
 
 
-FFLAGS=-g -fbounds-check -fbacktrace -finit-real=nan -ffree-line-length-none -ffpe-trap=invalid -J build/ -I build/
+FFLAGS=-g -Wall -fbounds-check -fbacktrace -finit-real=nan -ffree-line-length-none -ffpe-trap=invalid -J build/ -I build/
 
 
 esm_bias_correction: ${OBJECTS}
