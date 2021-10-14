@@ -43,7 +43,7 @@ contains
 
         do k = 1, nz
             do j = 1, ny
-                do i = 1, nz
+                do i = 1, nx
                     input_data = biased_data(i,j,k,:)
                     match_data = unbiased_data(i,j,k,:)
 
@@ -80,7 +80,7 @@ contains
 
         do k = 1, nz
             do j = 1, ny
-                do i = 1, nz
+                do i = 1, nx
                     input_data(1) = biased_data(i,j,k)
                     qm = this%qm(i,j,k)
 

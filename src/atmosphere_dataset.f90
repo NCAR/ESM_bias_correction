@@ -152,12 +152,8 @@ contains
         integer :: i, nx, ny
 
         if (allocated(this%data)) deallocate(this%data)
-        ! allocate(this%data(this%nlon, this%nlat, nz, this%reference%n_timesteps))
-        ! this%data = 0
 
         allocate(z(this%nlon, this%nlat, size(this%z_data, 3)))
-        allocate(temp_data(this%nlon, this%nlat, this%nlevels(variable_index)))
-        allocate(vinterped_data(this%nlon, this%nlat, nz))
 
         print*, "loading_reference"
 
@@ -167,6 +163,12 @@ contains
             z = this%reference%next( this%z_name)
 
             temp_data = this%reference%current( this%varnames( variable_index))
+
+            if (.not.allocated(vinterped_data)) then
+                nx = size(temp_data,1)
+                ny = size(temp_data,2)
+                allocate(vinterped_data(nx, ny, nz))
+            endif
 
             call this%vLUT%vinterp(z, temp_data, vinterped_data)
 
@@ -190,10 +192,6 @@ contains
 
         integer :: i
 
-        ! if (associated(this%z_data)) then
-        !     if (allocated(this%z_data)) deallocate(this%z_data)
-        ! endif
-
         allocate(this%z_data(this%nlon, this%nlat, maxval(this%nlevels)))
         this%z_data = 0
 
@@ -212,7 +210,7 @@ contains
         class(atm_t), intent(inout) :: this
         type(atm_t), intent(inout) :: ref_dataset
 
-
+        print*, ""
         ! generate the geographic lookup table to transform this dataset to the reference dataset
         call this%geo%setup_geo_LUT(ref_dataset%geo)
         print*, "in: generate_mean_calculations_for"
@@ -238,6 +236,7 @@ contains
 
         nz = ref_dataset%nlevels(variable_index)
 
+        print*, ""
         print*, "in: generate_bc_with", variable_index
 
         call this%reference%set_geo_transform(this%geo)
@@ -247,7 +246,8 @@ contains
         print*, "ref_dataset%load_reference_period"
         call ref_dataset%load_reference_period(nz, variable_index)
 
-        ! call this%bc%develop(this%data, ref_dataset%data)
+        print*, "this%bc%develop"
+        call this%bc%develop(this%data, ref_dataset%data)
 
     end subroutine generate_bc_with
 
@@ -286,7 +286,7 @@ contains
             endif
             this%data(:,:,:,i) = vinterped_data
 
-            ! call this%bc%apply(temp_data)
+            call this%bc%apply(temp_data)
         enddo
         call output%write(varname, this%data)
 
