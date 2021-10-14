@@ -142,24 +142,24 @@ contains
     end subroutine initialize_geo_data
 
 
-    subroutine load_reference_period(this, variable_index)
+    subroutine load_reference_period(this, nz, variable_index)
         implicit none
         class(atm_t), intent(inout) :: this
+        integer, INTENT(IN) :: nz
         integer, intent(in) :: variable_index
 
         real, DIMENSION(:,:,:), ALLOCATABLE :: temp_data, vinterped_data, z
-        integer :: i
+        integer :: i, nx, ny
 
         if (allocated(this%data)) deallocate(this%data)
-        print*, "WARNING, need to allocate data as f(nlevels of reference data)"
-        allocate(this%data(this%nlon, this%nlat, this%nlevels(variable_index), this%reference%n_timesteps))
-        this%data = 0
+        ! allocate(this%data(this%nlon, this%nlat, nz, this%reference%n_timesteps))
+        ! this%data = 0
 
         allocate(z(this%nlon, this%nlat, size(this%z_data, 3)))
         allocate(temp_data(this%nlon, this%nlat, this%nlevels(variable_index)))
+        allocate(vinterped_data(this%nlon, this%nlat, nz))
 
         print*, "loading_reference"
-        print*, trim(this%varnames( variable_index)), this%reference%n_timesteps
 
         call this%reference%reset_counter()
         do i=1, this%reference%n_timesteps
@@ -170,6 +170,12 @@ contains
 
             call this%vLUT%vinterp(z, temp_data, vinterped_data)
 
+            if (.not.allocated(this%data)) then
+                nx = size(vinterped_data,1)
+                ny = size(vinterped_data,2)
+                allocate(this%data(nx, ny, nz, this%reference%n_timesteps))
+                this%data = 0
+            endif
             this%data(:,:,:,i) = vinterped_data
         enddo
 
@@ -228,15 +234,20 @@ contains
         type(atm_t), intent(inout) :: ref_dataset
         integer, intent(in) :: variable_index
 
+        integer :: nz
+
+        nz = ref_dataset%nlevels(variable_index)
 
         print*, "in: generate_bc_with", variable_index
 
         call this%reference%set_geo_transform(this%geo)
 
-        call this%load_reference_period(variable_index)
-        call ref_dataset%load_reference_period(variable_index)
+        print*, "this%load_reference_period"
+        call this%load_reference_period(nz, variable_index)
+        print*, "ref_dataset%load_reference_period"
+        call ref_dataset%load_reference_period(nz, variable_index)
 
-        call this%bc%develop(this%data, ref_dataset%data)
+        ! call this%bc%develop(this%data, ref_dataset%data)
 
     end subroutine generate_bc_with
 
@@ -248,12 +259,15 @@ contains
         type(output_t), intent(inout) :: output
 
         character(len=kMAX_VARNAME_LENGTH) :: varname
-        integer :: i
+        integer :: i, nx, ny, nz
 
         real, DIMENSION(:,:,:), ALLOCATABLE :: z, temp_data, vinterped_data
 
+        if (allocated(this%data)) deallocate(this%data)
+
         varname = this%varnames(var_index)
         print*, trim(varname)
+
         call this%correction%set_geo_transform(this%geo)
 
         call this%correction%reset_counter()
@@ -263,10 +277,16 @@ contains
 
             call this%vLUT%vinterp(z, temp_data, vinterped_data)
 
+            if (.not.allocated(this%data)) then
+                nx = size(vinterped_data,1)
+                ny = size(vinterped_data,2)
+                nz = size(vinterped_data,3)
+                allocate(this%data(nx, ny, nz, this%reference%n_timesteps))
+                this%data = 0
+            endif
             this%data(:,:,:,i) = vinterped_data
 
-
-            call this%bc%apply(temp_data)
+            ! call this%bc%apply(temp_data)
         enddo
         call output%write(varname, this%data)
 
