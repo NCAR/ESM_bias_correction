@@ -18,7 +18,7 @@ module atmosphere_dataset
         ! store the reference period mean z coordinate in double precision so that the
         ! accumulation and averaging stage won't have significant precision errors
         real(kind=dp), dimension(:,:,:), pointer :: z_data
-        ! temporary data before developing the QM (nlon, nlat, nlevels ntimes)
+        ! temporary data before developing the QM (nlon, nlat, nlevels, ntimes)
         real, dimension(:,:,:,:), allocatable :: data
         ! store the latitude and longitude coordinates
         real, dimension(:,:), allocatable :: lat, lon
@@ -106,13 +106,31 @@ contains
         implicit none
         class(atm_t), intent(inout) :: this
 
+        real, DIMENSION(:,:), allocatable :: temp
+        integer :: nx, ny, i
 
         call io_read(trim(this%filenames(1)), trim(this%lat_name), this%lat)
         call io_read(trim(this%filenames(1)), trim(this%lon_name), this%lon)
 
         if (size(this%lat, 2) == 1) then
             ! lat and lon data were provided in one-d
-            stop "Not yet able to handle 1D lat/lon data"
+            nx = size(this%lon,1)
+            ny = size(this%lat,1)
+            allocate(temp(nx, ny))
+            do i=1,nx
+                temp(i,:) = this%lat(:,1)
+            enddo
+            deallocate(this%lat)
+            allocate(this%lat, source=temp)
+
+            do i=1,ny
+                temp(:,i) = this%lon(:,1)
+            enddo
+            deallocate(this%lon)
+            allocate(this%lon, source=temp)
+            deallocate(temp)
+
+            ! stop "Not yet able to handle 1D lat/lon data"
         endif
 
         this%nlon = size(this%lat,1)
