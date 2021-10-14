@@ -1,31 +1,60 @@
+# ----------------------------------------------------------------
+# Make file to compile esm_bias_correction code
+#
+# User changes might include the fortran compiler (to ifort) and with that the COMPILER_FFLAGS
+#
+# Right now, needs the netcdf prefix to be specified as the NETCDF variable
+# User can use make MODE=debug to turn on debugging flags
+#
+# If specific flags need to be passed for netcdf libraries, set NETCDF_LIB
+#
+# ----------------------------------------------------------------
+
 FC=gfortran
+
+# default to optimized compile
+COMPILER_FFLAGS= -Ofast
+
+ifeq ($(MODE),debug)
+	COMPILER_FFLAGS=-g -Wall -fbounds-check -fbacktrace -finit-real=nan -ffree-line-length-none -ffpe-trap=invalid
+endif
+
+
+
+# -f forces rm to remove non-existant files too (so it doesn't print lots of warning messages if there aren't any)
 RM=rm -f
-ECHO=echo
 
-NETCDF_LIB=-L${NETCDF}/lib -lnetcdf -lnetcdff
-NETCDF_INC=-I${NETCDF}/include
+ifndef (NETCDF_LIB)
+	NETCDF_LIB=-L$(NETCDF)/lib -lnetcdf -lnetcdff
+endif
+ifndef (NETCDF_INC)
+	NETCDF_INC=-I$(NETCDF)/include
+endif
 
+# specify the location of source code files
 SRCDIR   = src
+# specify the location of output files
 OBJDIR   = build
 
+# find all *.f90 files to compile
 SOURCES  := $(wildcard $(SRCDIR)/*.f90)
+# create a list of output objects by swaping src for build and .f90 for .o
 OBJECTS  := $(SOURCES:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
 
-
-FFLAGS=-g -Wall -fbounds-check -fbacktrace -finit-real=nan -ffree-line-length-none -ffpe-trap=invalid -J build/ -I build/
-
+FFLAGS=$(COMPILER_FFLAGS) -J $(OBJDIR) -I $(OBJDIR)
 
 esm_bias_correction: ${OBJECTS}
-	${FC} ${FFLAGS} $^ -o $@ ${NETCDF_LIB}
+	$(FC) $(FFLAGS) $^ -o $@ $(NETCDF_LIB)
 
 clean:
-	${RM} build/*.o build/*.mod build/*.smod esm_bias_correction
-	${RM} -r esm_bias_correction.dSYM
+	$(RM) build/*.o build/*.mod build/*.smod esm_bias_correction
+	$(RM) -r esm_bias_correction.dSYM
 
+# general rule to compile a src/*.f90 file into a build/*.o file
 $(OBJDIR)/%.o: $(SRCDIR)/%.f90
-	${FC} $(FFLAGS) -c $< -o $@ ${NETCDF_INC}
+	$(FC) $(FFLAGS) -c $< -o $@ $(NETCDF_INC)
 
-# Specify additional dependencies
+# Specify individual file dependencies
 build/atmosphere_dataset.o:	src/atmosphere_dataset.f90 build/constants.o build/io_routines.o \
 	build/output_dataset.o build/time_period.o build/quantile_map.o build/vertical_interpolation.o \
 	build/geographic_interpolation.o
