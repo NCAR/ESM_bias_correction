@@ -5,33 +5,59 @@ ECHO=echo
 NETCDF_LIB=-L${NETCDF}/lib -lnetcdf -lnetcdff
 NETCDF_INC=-I${NETCDF}/include
 
-# SRC=src/*.f90
-SRC=src/constants.f90 \
-	src/data_structures.f90 \
-	src/io_routines.f90 \
-	src/string.f90 \
-	src/sorting.f90 \
-	src/quantile_map_utility.f90 \
-	src/quantile_map.f90 \
-	src/time_delta_obj.f90 \
-	src/time_h.f90 \
-	src/time_obj.f90 \
-	src/time_io.f90 \
-	src/output_dataset.f90 \
-	src/geo_reader.f90 \
-	src/geographic_interpolation.f90 \
-	src/vinterp.f90 \
-	src/vertical_interpolation.f90 \
-	src/time_period.f90 \
-	src/atmosphere_dataset.f90 \
-	src/initialize.f90 \
-	src/bias_correction.f90
+SRCDIR   = src
+OBJDIR   = build
+
+SOURCES  := $(wildcard $(SRCDIR)/*.f90)
+OBJECTS  := $(SOURCES:$(SRCDIR)/%.f90=$(OBJDIR)/%.o)
+
 
 FFLAGS=-g -fbounds-check -fbacktrace -finit-real=nan -ffree-line-length-none -ffpe-trap=invalid -J build/ -I build/
 
-esm_bias_correction: ${SRC}
-	${FC} ${FFLAGS} $^ -o $@ ${NETCDF_INC} ${NETCDF_LIB}
+
+esm_bias_correction: ${OBJECTS}
+	${FC} ${FFLAGS} $^ -o $@ ${NETCDF_LIB}
 
 clean:
 	${RM} build/*.o build/*.mod build/*.smod esm_bias_correction
 	${RM} -r esm_bias_correction.dSYM
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.f90
+	${FC} $(FFLAGS) -c $< -o $@ ${NETCDF_INC}
+
+# Specify additional dependencies
+build/atmosphere_dataset.o:	src/atmosphere_dataset.f90 build/constants.o build/io_routines.o \
+	build/output_dataset.o build/time_period.o build/quantile_map.o build/vertical_interpolation.o \
+	build/geographic_interpolation.o
+
+build/bias_correction.o: src/bias_correction.f90 build/atmosphere_dataset.o build/output_dataset.o build/initialize.o
+
+build/geo_reader.o: src/geo_reader.f90 build/data_structures.o build/constants.o
+
+build/geographic_interpolation.o: src/geographic_interpolation.f90 build/data_structures.o build/geo_reader.o
+
+build/initialize.o: src/initialize.f90 build/atmosphere_dataset.o build/output_dataset.o build/constants.o
+
+build/output_dataset.o: src/output_dataset.f90 build/io_routines.o build/constants.o
+
+build/quantile_map.o: src/quantile_map.f90 build/data_structures.o build/quantile_map_utility.o
+
+build/quantile_map_utility.o: src/quantile_map_utility.f90 build/sorting.o build/data_structures.o
+
+build/string.o: src/string.f90 build/constants.o
+
+build/time_delta_obj.o: src/time_delta_obj.f90 build/constants.o
+
+build/time_h.o: src/time_h.f90 build/time_delta_obj.o build/constants.o
+
+build/time_obj.o: src/time_obj.f90 build/time_h.o
+
+build/time_io.o: src/time_io.f90 build/constants.o build/time_h.o build/time_delta_obj.o \
+	build/string.o build/io_routines.o
+
+build/time_period.o: src/time_period.f90 build/constants.o build/geographic_interpolation.o \
+	build/io_routines.o build/time_io.o build/time_h.o
+
+build/vertical_interpolation.o: src/vertical_interpolation.f90 build/vinterp.o build/data_structures.o
+
+build/vinterp.o: src/vinterp.f90 build/data_structures.o
