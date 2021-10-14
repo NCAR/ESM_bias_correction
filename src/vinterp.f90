@@ -160,6 +160,16 @@ contains
                     endif
                     vert_lut%z(:,i,k,j) = curpos
                     vert_lut%w(:,i,k,j) = curweights
+                    if (maxval(curweights) > 10) then
+                        write(*,*) "BAD vlut values!"
+                        write(*,*) "  position: ", i,k,j
+                        write(*,*) "hiz:",hi_z(i,k,j), "   lo_z:", lo_z(i,k,curpos(1))
+                        write(*,*) "curpos",curpos
+                        write(*,*) "dz",(lo_z(i,k,curpos(2))-lo_z(i,k,curpos(1)))
+                        write(*,*) "lo_z",lo_z(i,k,:)
+                        call flush
+                        stop
+                    endif
                     guess = curpos(2)
                 enddo !j=1,z  ! difference from vLUT
             enddo !i=1,x

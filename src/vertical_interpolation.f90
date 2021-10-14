@@ -37,7 +37,9 @@ Contains
 
         call vLUT(this%z, z, this%vLUT)
 
+        ! if (allocated(output_data)) deallocate(output_data)
         if (.not.allocated(output_data)) allocate(output_data(nx, ny, nz))
+
         call interpolate_vertically(output_data, data, this%vLUT)
 
     end subroutine vinterp
