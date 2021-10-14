@@ -39,6 +39,7 @@ contains
         this%input%lon = reference_geo%lon
 
         call geo_LUT(this%input, this%output)
+
         this%geoLUT_exists = .True.
 
     end subroutine setup_geo_LUT
@@ -52,10 +53,9 @@ contains
 
         integer :: nx, ny, nz
 
-        nx = size(this%lat,1)
-        ny = size(this%lat,2)
+        nx = size(this%output%geolut%x,2)
+        ny = size(this%output%geolut%x,3)
         nz = size(input_data,3)
-
         allocate(output_data(nx, ny, nz))
 
         call geo_interp(output_data, input_data, this%output%geolut)
