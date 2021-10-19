@@ -36,7 +36,8 @@ contains
                             ref_start="1980-01-01 00:00:00",&
                             ref_end="1985-12-31 00:00:00",  &
                             cor_start="1980-01-01 00:00:00",&
-                            cor_end="1980-12-31 00:00:00")
+                            cor_end="1980-12-31 00:00:00",  &
+                            n_segments=100)
 
         ! initialize the ESM dataset
         nfiles = read_forcing_file_names("esm_file_list.txt", all_files)
@@ -56,7 +57,8 @@ contains
                             ref_start="2000-01-01 00:00:00",&
                             ref_end="2010-12-31 00:00:00",  &
                             cor_start="2000-01-01 00:00:00",&
-                            cor_end="2019-12-31 00:00:00")
+                            cor_end="2019-12-31 00:00:00",  &
+                            n_segments=100)
 
         call io_read(ref_files(1), "lat", lat)
         call io_read(ref_files(1), "lon", lon)

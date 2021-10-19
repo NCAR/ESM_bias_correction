@@ -12,7 +12,7 @@ module atmosphere_dataset
 
     type atm_t
 
-        integer :: n_variables
+        integer :: n_variables, n_segments
         integer, allocatable :: nlevels(:), nlon, nlat
 
         ! store the reference period mean z coordinate in double precision so that the
@@ -46,7 +46,7 @@ module atmosphere_dataset
 
 contains
     subroutine init(this, filenames, varnames, z_name, lat_name, lon_name, time_name, &
-                    ref_start, ref_end, cor_start, cor_end)
+                    ref_start, ref_end, cor_start, cor_end, n_segments)
         implicit none
         class(atm_t), intent(inout) :: this
         CHARACTER(len=*), intent(in) :: filenames(:)
@@ -55,6 +55,7 @@ contains
         CHARACTER(len=*), intent(in) :: lat_name, lon_name, time_name
         CHARACTER(len=*), intent(in) :: ref_start, ref_end
         CHARACTER(len=*), intent(in) :: cor_start, cor_end
+        integer, intent(in) :: n_segments
 
         integer :: i
         integer :: dims(io_maxDims)
@@ -63,6 +64,7 @@ contains
         this%filenames = filenames
         this%varnames = varnames
         this%n_variables = size(varnames)
+        this%n_segments = n_segments
 
         this%z_name = z_name
         this%lat_name = lat_name
@@ -247,7 +249,7 @@ contains
         call ref_dataset%load_reference_period(nz, variable_index)
 
         print*, "this%bc%develop"
-        call this%bc%develop(this%data, ref_dataset%data)
+        call this%bc%develop(this%data, ref_dataset%data, this%n_segments)
 
     end subroutine generate_bc_with
 
