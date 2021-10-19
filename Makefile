@@ -65,7 +65,7 @@ build/geo_reader.o: src/geo_reader.f90 build/data_structures.o build/constants.o
 
 build/geographic_interpolation.o: src/geographic_interpolation.f90 build/data_structures.o build/geo_reader.o
 
-build/initialize.o: src/initialize.f90 build/atmosphere_dataset.o build/output_dataset.o build/constants.o
+build/initialize.o: src/initialize.f90 build/atmosphere_dataset.o build/string.o build/io_routines.o build/output_dataset.o build/constants.o
 
 build/output_dataset.o: src/output_dataset.f90 build/io_routines.o build/constants.o
 

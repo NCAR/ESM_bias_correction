@@ -266,7 +266,7 @@ contains
         if (allocated(this%data)) deallocate(this%data)
 
         varname = this%varnames(var_index)
-        print*, trim(varname)
+        print*, "Applying BC: ", trim(varname)
 
         call this%correction%set_geo_transform(this%geo)
 
@@ -284,11 +284,14 @@ contains
                 allocate(this%data(nx, ny, nz, this%reference%n_timesteps))
                 this%data = 0
             endif
-            this%data(:,:,:,i) = vinterped_data
 
-            call this%bc%apply(temp_data)
+            call this%bc%apply(vinterped_data)
+            this%data(:,:,:,i) = vinterped_data
         enddo
+
+        print*, "writing output"
         call output%write(varname, this%data)
+        print*, "---------------"
 
     end subroutine apply_bc
 

@@ -159,7 +159,7 @@ contains
         dims(1)=numDims
         ! finally, find the length of each dimension
         do i=1,numDims
-            call check(nf90_inquire_dimension(ncid, dimIds(i), len = dimlen))
+            call check(nf90_inquire_dimension(ncid, dimIds(i), len = dimlen), varname)
             dims(i+1)=dimlen
         end do
         ! Close the file, freeing all resources.
@@ -1311,7 +1311,7 @@ contains
         ! if given a variable name find that variable ID to write the attribute to
         ! else the attribute will be global
         if (present(varname)) then
-            call check( nf90_inq_varid(ncid, varname, varid))
+            call check( nf90_inq_varid(ncid, varname, varid), "varid:"//trim(filename)//":"//trim(varname))
         else
             varid = NF90_GLOBAL
         endif
