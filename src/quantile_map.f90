@@ -16,10 +16,12 @@ contains
     ! develop any bias correction technique.
     ! input is the 4-D biased data to be corrected and the 4-D unbiased data
     ! calls the develop_qm routine to develop a separate quantile mapping for each grid cell
-    subroutine develop(this, biased_data, unbiased_data)
+    subroutine develop(this, biased_data, unbiased_data, n_segments)
         implicit none
         class(bc_transform), INTENT(INOUT) :: this
         real, DIMENSION(:,:,:,:), intent(in) :: biased_data, unbiased_data
+        ! number of quantiles in the quantile map
+        integer, intent(in) :: n_segments
 
         ! before computing a correction, the data need to be isolated to a 1D time series
         real, DIMENSION(:), allocatable :: input_data, match_data
@@ -28,14 +30,10 @@ contains
         ! loop index variables
         integer :: nx, ny, nz
         integer :: i, j, k
-        ! number of quantiles in the quantile map
-        integer :: n_segments
 
         nx = size(biased_data, 1)
         ny = size(biased_data, 2)
         nz = size(biased_data, 3)
-
-        n_segments = 10
 
         ! allocate quantile mapping objects for each grid cell
         if (allocated(this%qm)) deallocate(this%qm)

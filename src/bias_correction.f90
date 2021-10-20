@@ -14,7 +14,13 @@ program esm_bias_correction
     ! initialize datasets, read in lat / lon, set up file and variable names
     call init(reference, esm, output)
 
+    print*, "reference%generate_means()"
     call reference%generate_means()
+
+    print*, "output%update_z"
+    call output%update_z(reference%z_name, reference%z_data)
+
+    print*, "esm%generate_mean_calculations_for(reference)"
     call esm%generate_mean_calculations_for(reference)
 
     do v = 1, esm%n_variables
@@ -25,5 +31,7 @@ program esm_bias_correction
         print*, "call esm%apply_bc(v, output)"
         call esm%apply_bc(v, output)
     enddo
+
+    call output%close()
 
 end program esm_bias_correction

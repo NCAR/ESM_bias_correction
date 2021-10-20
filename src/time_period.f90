@@ -192,7 +192,8 @@ contains
         associate(step => this%step, file=>this%file)
             step = step + 1
 
-            if (step > this%file_start_points(file)+ this%steps_per_file(file) - 1) then
+            if (step > this%steps_per_file(file)) then
+                print*, trim(this%files(file))
                 file = file + 1
                 step = 1
                 if (file > size(this%files)) then
