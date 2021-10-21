@@ -96,7 +96,7 @@ build/time_io.o: src/time_io.f90 build/constants.o build/time_h.o build/time_del
 	build/string.o build/io_routines.o
 
 build/time_period.o: src/time_period.f90 build/constants.o build/geographic_interpolation.o \
-	build/io_routines.o build/time_io.o build/time_h.o
+	build/io_routines.o build/time_io.o build/time_h.o build/time_delta_obj.o
 
 build/vertical_interpolation.o: src/vertical_interpolation.f90 build/vinterp.o build/data_structures.o
 

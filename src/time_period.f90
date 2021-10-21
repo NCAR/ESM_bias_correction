@@ -4,6 +4,7 @@ module time_periods
     use io_routines, only: io_getdims, io_maxDims, io_read
     use time_io, only : read_times, find_timestep_in_file
     use time_object, only : Time_type
+    use time_delta_object, only: time_delta_t
 
     type time_period_data_t
 
@@ -17,9 +18,12 @@ module time_periods
 
         integer, ALLOCATABLE, DIMENSION(:) :: steps_per_file
         integer, ALLOCATABLE, DIMENSION(:) :: file_start_points
+        integer :: start_point, end_point
         character(len=kMAX_FILE_LENGTH), allocatable, DIMENSION(:) :: files
         character(len=kMAX_VARNAME_LENGTH) :: time_variable
+
         type(Time_type), allocatable, dimension(:) :: times
+        type(time_delta_t) :: dt
 
         type(geo_transform), pointer :: geo
 
@@ -30,6 +34,7 @@ module time_periods
         procedure, public  :: current => current
         procedure, public  :: reset_counter => reset_counter
         procedure, public  :: set_geo_transform => set_geo_transform
+        procedure, public  :: get_times => get_times
 
     end type time_period_data_t
 
@@ -91,7 +96,6 @@ contains
 
         type(Time_type) :: start_t, end_t
         integer :: start_step, start_file, end_step, end_file
-        integer :: start_point, end_point
 
         call start_t%set(start_time)
         call end_t%set(end_time)
@@ -105,16 +109,31 @@ contains
         call find_point_in_files(this, start_t, start_file, start_step, find_before=.False.)
         call find_point_in_files(this, end_t, end_file, end_step, find_before=.True.)
 
-        start_point = this%file_start_points(start_file) + start_step - 1
-        end_point = this%file_start_points(end_file) + end_step - 1
+        this%start_point = this%file_start_points(start_file) + start_step - 1
+        this%end_point = this%file_start_points(end_file) + end_step - 1
+        this%n_timesteps = this%end_point - this%start_point + 1
 
-        this%n_timesteps = end_point - start_point + 1
         this%file_start = start_file
         this%step_start = start_step
         this%file_end = end_file
         this%step_end = end_step
+        this%dt = this%times(2) - this%times(1)
 
     end subroutine find_period
+
+    function get_times(this) result(times)
+            implicit none
+            class(time_period_data_t), intent(in) :: this
+            double precision, allocatable :: times(:)
+
+            integer :: i
+
+            allocate(times(this%n_timesteps))
+            do i=1,this%n_timesteps
+                times(i) = (i-1) * (this%dt%seconds() / 86400.0) ! convert time delta to days
+            enddo
+
+    end function get_times
 
 
     subroutine find_point_in_files(this, time, file, step, find_before)
