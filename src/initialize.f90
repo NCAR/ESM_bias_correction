@@ -125,73 +125,6 @@ contains
 
     end function read_forcing_file_names
 
-    function read_ref_config(options_file) result(ref_parameters)
-        implicit none
-        character(len=*), intent(in) :: options_file
-        type(parameters_t) :: ref_parameters
-
-        character(len=kMAX_FILE_LENGTH), dimension(:), allocatable :: all_files
-        character(len=kMAX_FILE_LENGTH), dimension(:), allocatable :: ref_files
-        integer :: nfiles
-
-        character(len=kMAX_FILE_LENGTH) :: varnames(kMAX_NUMBER_FILES), z_name, lat_name, lon_name, time_name, &
-                                           ref_start, ref_end, cor_start, cor_end, &
-                                           outputfile, filelist
-        integer :: n_segments, nvars, i, name_unit
-
-        namelist /reference_parameters/ varnames, filelist, varnames, z_name, lat_name, lon_name, time_name, &
-                                        ref_start, ref_end, cor_start, cor_end, n_segments, outputfile
-
-
-        !defaults:
-        varnames = ""
-        varnames(1) = "qv"
-        filelist="ref_file_list.txt"
-        z_name="z"
-        lat_name="lat"
-        lon_name="lon"
-        time_name="time"
-        ref_start="1980-01-01 00:00:00"
-        ref_end="1985-12-31 00:00:00"
-        cor_start="1980-01-01 00:00:00"
-        cor_end="1980-12-31 00:00:00"
-        n_segments=100
-
-
-        ! read namelists
-        open(io_newunit(name_unit), file=options_file)
-        read(name_unit,nml=reference_parameters)
-        close(name_unit)
-
-        ! setup an array containing just the file names read from filelist
-        allocate(all_files(kMAX_NUMBER_FILES))
-        nfiles = read_forcing_file_names(filelist, all_files)
-        allocate(ref_files(nfiles))
-        ref_files = all_files(1:nfiles)
-
-        ! setup an array for the variable names
-        nvars = 0
-        do i=1, kMAX_NUMBER_FILES
-            if (varnames(i) /= "") then
-                nvars = nvars + 1
-            endif
-        enddo
-        allocate(ref_parameters%varnames(nvars))
-
-        ref_parameters%varnames = varnames(1:nvars)
-        ref_parameters%filenames = ref_files
-        ref_parameters%varnames = varnames
-        ref_parameters%z_name = z_name
-        ref_parameters%lat_name = lat_name
-        ref_parameters%lon_name = lon_name
-        ref_parameters%time_name = time_name
-        ref_parameters%ref_start = ref_start
-        ref_parameters%ref_end = ref_end
-        ref_parameters%cor_start = cor_start
-        ref_parameters%cor_end = cor_end
-        ref_parameters%n_segments = n_segments
-
-    end function read_ref_config
 
     function read_config(options_file, nml_type) result(parameters)
         implicit none
@@ -208,15 +141,15 @@ contains
                                            outputfile, filelist
         integer :: n_segments, nvars, i, name_unit
 
-        namelist /ESM_parameters/ varnames, filelist, varnames, z_name, lat_name, lon_name, time_name, &
+        namelist /ESM_parameters/ filelist, varnames, z_name, lat_name, lon_name, time_name, &
                                         ref_start, ref_end, cor_start, cor_end, n_segments, outputfile
 
-        namelist /reference_parameters/ varnames, filelist, varnames, z_name, lat_name, lon_name, time_name, &
+        namelist /reference_parameters/ filelist, varnames, z_name, lat_name, lon_name, time_name, &
                                         ref_start, ref_end, cor_start, cor_end, n_segments, outputfile
 
 
         !defaults:
-        varnames = ""
+        varnames = "---------"
         varnames(1) = "qv"
         filelist="file_list.txt"
         z_name="z"
@@ -228,6 +161,7 @@ contains
         cor_start="1980-01-01 00:00:00"
         cor_end="1980-12-31 00:00:00"
         n_segments=100
+        outputfile="output.nc"
 
 
         ! read namelists
@@ -250,15 +184,15 @@ contains
         ! setup an array for the variable names
         nvars = 0
         do i=1, kMAX_NUMBER_FILES
-            if (varnames(i) /= "") then
+            if (varnames(i) /= "---------") then
                 nvars = nvars + 1
             endif
         enddo
+        print*, "found n vars: ", nvars
         allocate(parameters%varnames(nvars))
 
         parameters%varnames = varnames(1:nvars)
         parameters%filenames = forcing_files
-        parameters%varnames = varnames
         parameters%z_name = z_name
         parameters%lat_name = lat_name
         parameters%lon_name = lon_name
@@ -268,6 +202,7 @@ contains
         parameters%cor_start = cor_start
         parameters%cor_end = cor_end
         parameters%n_segments = n_segments
+        parameters%outputfile = outputfile
 
     end function read_config
 
