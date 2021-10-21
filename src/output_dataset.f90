@@ -23,16 +23,18 @@ module output_dataset
         procedure, public  :: close => close
         procedure, public  :: update_z => update_z
         procedure, public  :: write => write_var
+        procedure, public  :: write_time => write_time
     end type output_t
 
 contains
-    subroutine init(this, output_file, varnames, dims, dimnames, z, lat, lon)
+    subroutine init(this, output_file, varnames, dims, dimnames, start_time, z, lat, lon)
         implicit none
         class(output_t), intent(inout) :: this
         character(len=*), intent(in) :: output_file
         character(len=*), dimension(:), intent(in) :: varnames
         integer,          dimension(:), intent(inout) :: dims
         character(len=*), dimension(:), intent(in) :: dimnames
+        character(len=*), intent(in) :: start_time
         real, intent(in) :: z(:,:,:), lat(:), lon(:)
 
         integer :: i
@@ -50,29 +52,32 @@ contains
         allocate(this%varids(size(varnames)))
 
         print*, "Writing to outputfile: ", trim(output_file)
-        call initialize_output_file(output_file, varnames, dimnames, dims, z, lat, lon, this%ncid, this%varids)
+        call initialize_output_file(output_file, varnames, dimnames, dims, start_time, z, lat, lon, this%ncid, this%varids)
 
     end subroutine init
 
-    ! subroutine write(this, varname, data_array)
-    !     implicit none
-    !     class(output_t), intent(inout) :: this
-    !     character(len=*), intent(in) :: varname
-    !     real, DIMENSION(:,:,:,:) :: data_array
-    !
-    !     print*, trim(varname), minval(data_array), maxval(data_array)
-    !     call write_var(trim(varname)//"_"//trim(this%output_file), varname, data_array, this%ncid)
-    !
-    ! end subroutine write
+    subroutine write_time(this, times)
+        implicit none
+        class(output_t), intent(inout) :: this
+        double precision, intent(in), DIMENSION(:) :: times
+
+        integer :: varid
+
+        call check( nf90_inq_varid(this%ncid, "time", varid), "varid:"//trim("time"))
+
+        call check( nf90_put_var(this%ncid, varid, times), "put: time")
+
+    end subroutine write_time
 
 
-    subroutine initialize_output_file(filename, varnames, dims, dim_sizes, z, lat, lon, ncid, varids)
+    subroutine initialize_output_file(filename, varnames, dims, dim_sizes, start_time, z, lat, lon, ncid, varids)
             implicit none
             ! This is the name of the file and variable we will write.
             character(len=*), intent(in) :: filename
             character(len=*), intent(in), dimension(:) :: dims, varnames
             integer, intent(inout), dimension(:) :: dim_sizes
 
+            character(len=*), intent(in) :: start_time
             real, intent(in) :: z(:,:,:), lat(:), lon(:)
 
             ! This will be the netCDF ID for the file and data variable.
@@ -101,14 +106,18 @@ contains
                 varids(i) = temp_varid
             enddo
 
-            ! setup coordinate variables (don't write time yet?)
-            call check( nf90_def_var(ncid, "time", NF90_REAL, dimids(1), temp_varid), trim(filename)//":"//trim("time"))
+            ! setup coordinate variables (don't write time)
+            call check( nf90_def_var(ncid, "time", NF90_DOUBLE, dimids(4), temp_varid), trim(filename)//":"//trim("time"))
+            ! write the time units attribute to the file
+            call check( nf90_put_att(ncid, temp_varid, "units", "days since "//trim(start_time)), &
+                                    "writing attribute: units to:"//trim(filename))
+
             ! call check( nf90_put_var(ncid, temp_varid, times), trim(filename)//":"//trim("time"))
 
-            call check( nf90_def_var(ncid, "lat", NF90_REAL, dimids(3), temp_varid), trim(filename)//":"//trim("lat"))
+            call check( nf90_def_var(ncid, "lat", NF90_REAL, dimids(2), temp_varid), trim(filename)//":"//trim("lat"))
             coord_varids(1) = temp_varid
 
-            call check( nf90_def_var(ncid, "lon", NF90_REAL, dimids(4), temp_varid), trim(filename)//":"//trim("lon"))
+            call check( nf90_def_var(ncid, "lon", NF90_REAL, dimids(1), temp_varid), trim(filename)//":"//trim("lon"))
             coord_varids(2) = temp_varid
 
             call check( nf90_def_var(ncid, "z", NF90_REAL, dimids(:3), temp_varid), trim(filename)//":"//trim("z"))

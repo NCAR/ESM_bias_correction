@@ -35,7 +35,7 @@ contains
 
         options_file = get_options_file()
         ref_options = read_config(options_file,"r")
-        esm_options = read_config(options_file,"r")
+        esm_options = read_config(options_file,"e")
 
         call reference%init(filenames   = ref_options%filenames,    & !ref_files,            &
                             varnames    = ref_options%varnames,     & !["qv"],                &
@@ -76,7 +76,7 @@ contains
                         ref_options%varnames,               &
                         dim_sizes,                          &
                         [" lon", " lat", " lev","time"],    &
-                        z, lat, lon)
+                        esm_options%cor_start, z, lat, lon)
 
 
     end subroutine init

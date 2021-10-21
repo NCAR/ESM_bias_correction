@@ -32,6 +32,8 @@ program esm_bias_correction
         call esm%apply_bc(v, output)
     enddo
 
+    call output%write_time(esm%get_output_times())
+
     call output%close()
 
 end program esm_bias_correction

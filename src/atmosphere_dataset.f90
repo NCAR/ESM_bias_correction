@@ -42,6 +42,7 @@ module atmosphere_dataset
         procedure, public  :: generate_bc_with => generate_bc_with
         procedure, public  :: load_reference_period => load_reference_period
         procedure, public  :: apply_bc => apply_bc
+        procedure, public  :: get_output_times
     end type atm_t
 
 contains
@@ -184,6 +185,16 @@ contains
         enddo
 
     end subroutine load_reference_period
+
+
+    function get_output_times(this) result(times)
+        implicit none
+        class(atm_t), intent(inout) :: this
+        double precision, allocatable :: times(:)
+
+        times = this%correction%get_times()
+
+    end function get_output_times
 
 
     !>----------------------
