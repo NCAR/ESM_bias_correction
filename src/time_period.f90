@@ -90,7 +90,7 @@ contains
         character(len=*), intent(in) :: start_time, end_time
 
         type(Time_type) :: start_t, end_t
-        integer :: i, err, start_step, start_file, end_step, end_file
+        integer :: start_step, start_file, end_step, end_file
         integer :: start_point, end_point
 
         call start_t%set(start_time)
@@ -132,13 +132,13 @@ contains
         step = -1
 
         i=1
-        fileend = this%file_start_points(file) + this%steps_per_file(file)
+        fileend = this%file_start_points(file) + this%steps_per_file(file) - 1
 
         do while (.not.found)
             ! if we are off the end of the current file, look at the next file
             if (fileend < i) then
                 file = file + 1
-                fileend = this%file_start_points(file) + this%steps_per_file(file)
+                fileend = this%file_start_points(file) + this%steps_per_file(file) - 1
             endif
 
             ! if the time we are looking for is before the current time, we are done!
@@ -152,6 +152,12 @@ contains
                     found = .True.
                     file = -1
                     step = -1
+                    print*, "ERROR: unable to find timestep:", trim(time%as_string())
+                    print*, "times(1)=",trim(this%times(1)%as_string())
+                    print*, "times(n)=",trim(this%times(this%all_timesteps)%as_string())
+                    print*, "n = ", this%all_timesteps
+                    file = size(this%file_start_points)
+                    step = this%steps_per_file(file)
                 endif
             endif
         enddo
