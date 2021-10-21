@@ -294,7 +294,7 @@ contains
                 nx = size(vinterped_data,1)
                 ny = size(vinterped_data,2)
                 nz = size(vinterped_data,3)
-                allocate(this%data(nx, ny, nz, this%reference%n_timesteps))
+                allocate(this%data(nx, ny, nz, this%correction%n_timesteps))
                 this%data = 0
             endif
 
