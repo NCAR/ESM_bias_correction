@@ -102,13 +102,13 @@ contains
             enddo
 
             ! setup coordinate variables (don't write time yet?)
-            call check( nf90_def_var(ncid, "time", NF90_REAL, dimids(1), temp_varid), trim(filename)//":"//trim("time"))
+            call check( nf90_def_var(ncid, "time", NF90_REAL, dimids(4), temp_varid), trim(filename)//":"//trim("time"))
             ! call check( nf90_put_var(ncid, temp_varid, times), trim(filename)//":"//trim("time"))
 
-            call check( nf90_def_var(ncid, "lat", NF90_REAL, dimids(3), temp_varid), trim(filename)//":"//trim("lat"))
+            call check( nf90_def_var(ncid, "lat", NF90_REAL, dimids(2), temp_varid), trim(filename)//":"//trim("lat"))
             coord_varids(1) = temp_varid
 
-            call check( nf90_def_var(ncid, "lon", NF90_REAL, dimids(4), temp_varid), trim(filename)//":"//trim("lon"))
+            call check( nf90_def_var(ncid, "lon", NF90_REAL, dimids(1), temp_varid), trim(filename)//":"//trim("lon"))
             coord_varids(2) = temp_varid
 
             call check( nf90_def_var(ncid, "z", NF90_REAL, dimids(:3), temp_varid), trim(filename)//":"//trim("z"))
