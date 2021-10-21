@@ -13,12 +13,23 @@
 FC=gfortran
 
 # default to optimized compile
-COMPILER_FFLAGS= -Ofast
+COMPILER_FFLAGS= -Ofast -fopenmp -lgomp
+ifeq ($(MODE),serial)
+	COMPILER_FFLAGS=-Ofast
+endif
+
 
 ifeq ($(MODE),debug)
+	COMPILER_FFLAGS=-g -Wall -fbounds-check -fbacktrace -finit-real=nan -ffree-line-length-none -ffpe-trap=invalid -fopenmp -lgomp
+endif
+
+ifeq ($(MODE),debugserial)
 	COMPILER_FFLAGS=-g -Wall -fbounds-check -fbacktrace -finit-real=nan -ffree-line-length-none -ffpe-trap=invalid
 endif
 
+ifeq ($(MODE),profile)
+	COMPILER_FFLAGS=-g -pg -ffree-line-length-none -O3 -fopenmp -lgomp
+endif
 
 
 # -f forces rm to remove non-existant files too (so it doesn't print lots of warning messages if there aren't any)

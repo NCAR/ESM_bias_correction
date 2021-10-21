@@ -124,6 +124,10 @@ contains
         ! assumes that if it has been allocated before, we can use the same size again
         if (.not.allocated(vert_lut%z)) allocate(vert_lut%z(2,nx,ny,nz))   ! difference from vLUT
         if (.not.allocated(vert_lut%w)) allocate(vert_lut%w(2,nx,ny,nz))   ! difference from vLUT
+
+        !$OMP PARALLEL DEFAULT(PRIVATE) FIRSTPRIVATE(nx, ny, nz, lo_nz) &
+        !$OMP SHARED(hi_z, lo_z, vert_lut)
+        !$OMP DO
         do k=1,ny  ! difference from vLUT
             do i=1,nx
                 guess=1
@@ -174,6 +178,8 @@ contains
                 enddo !j=1,z  ! difference from vLUT
             enddo !i=1,x
         enddo !k=1,y  ! difference from vLUT
+        !$OMP end do
+        !$OMP end parallel
 
     end subroutine vLUT
 

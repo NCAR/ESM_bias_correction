@@ -39,6 +39,9 @@ contains
         if (allocated(this%qm)) deallocate(this%qm)
         ALLOCATE(this%qm(nx, ny, nz))
 
+        !$OMP PARALLEL DEFAULT(PRIVATE) FIRSTPRIVATE(n_segments, nx, ny, nz) &
+        !$OMP SHARED(biased_data, unbiased_data, this)
+        !$OMP DO
         do k = 1, nz
             do j = 1, ny
                 do i = 1, nx
@@ -51,6 +54,8 @@ contains
                 enddo
             enddo
         enddo
+        !$omp end do
+        !$omp end parallel
 
     end subroutine develop
 
@@ -76,6 +81,10 @@ contains
         allocate(input_data(1))
         allocate(output_data(1))
 
+        !$omp parallel default(shared) &
+        !$omp firstprivate(nx, ny, nz, input_data, qm, output_data) &
+        !$omp private(i,j,k)
+        !$omp do
         do k = 1, nz
             do j = 1, ny
                 do i = 1, nx
@@ -88,6 +97,8 @@ contains
                 enddo
             enddo
         enddo
+        !$omp end do
+        !$omp end parallel
 
     end subroutine apply
 

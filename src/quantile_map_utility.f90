@@ -190,14 +190,14 @@ contains
         integer :: i, n
 
         n = size(input)
-        !$omp parallel default(shared) &
-        !$omp firstprivate(i,n)
-        !$omp do
+        ! $omp parallel default(shared) &
+        ! $omp firstprivate(i,n)
+        ! $omp do
         do i = 1, n
             output(i) = qm_value(input(i), qm)
         end do
-        !$omp end do
-        !$omp end parallel
+        ! $omp end do
+        ! $omp end parallel
 
     end subroutine apply_qm
 
