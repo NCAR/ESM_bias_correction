@@ -73,7 +73,7 @@ contains
         dim_sizes = [ nx, ny, nz, 0]
 
         call output%init(ref_options%outputfile,            &
-                        ref_options%varnames,               &
+                        esm_options%varnames,               &
                         dim_sizes,                          &
                         [" lon", " lat", " lev","time"],    &
                         esm_options%cor_start, z, lat, lon)
