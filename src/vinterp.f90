@@ -143,16 +143,22 @@ contains
                         curpos(2) = 2
                         ! note that this will be > 1
                         curweights(1) = (lo_z(i,k,curpos(2))-hi_z(i,k,j)) / (lo_z(i,k,curpos(2))-lo_z(i,k,curpos(1)))
+                        ! if weights > 2, fix them at 2 and -1.
+                        if (curweights(1) > 2) curweights(1) = 2
                         ! note that this will be < 0 providing a bilinear extrapolation
                         curweights(2) = 1-curweights(1)
+
                     elseif (curpos(1)==-2) then
                         ! matched above the grid so we must extrapolate upward.
                         curpos(1) = lo_nz-1
                         curpos(2) = lo_nz
                         ! note that this will be > 1
                         curweights(2) = (hi_z(i,k,j)-lo_z(i,k,curpos(1))) / (lo_z(i,k,curpos(2))-lo_z(i,k,curpos(1)))
+                        ! if weights > 2, fix them at 2 and -1.
+                        if (curweights(2) > 2) curweights(2) = 2
                         ! note that this will be < 0 providing a bilinear extrapolation
                         curweights(1) = 1-curweights(2)
+
                     else
                         write(*,*) "find_match Failed to return appropriate position"
                         write(*,*) " at grid location:"

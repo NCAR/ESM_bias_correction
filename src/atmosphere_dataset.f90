@@ -260,7 +260,9 @@ contains
         call ref_dataset%load_reference_period(nz, variable_index)
 
         print*, "this%bc%develop"
-        call this%bc%develop(this%data, ref_dataset%data, this%n_segments)
+        if (this%n_segments > 0) then
+            call this%bc%develop(this%data, ref_dataset%data, this%n_segments)
+        endif
 
     end subroutine generate_bc_with
 
@@ -298,7 +300,9 @@ contains
                 this%data = 0
             endif
 
-            call this%bc%apply(vinterped_data)
+            if (this%n_segments > 0) then
+                call this%bc%apply(vinterped_data)
+            endif
             this%data(:,:,:,i) = vinterped_data
         enddo
 
