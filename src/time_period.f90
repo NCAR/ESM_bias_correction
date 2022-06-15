@@ -116,8 +116,8 @@ contains
 
         if (end_t < start_t) then
             print*, "ERROR, start of time period is after end of time period"
-            print("Start:"//trim(start_t%as_string()))
-            print("End:"//trim(end_t%as_string()))
+            print*, "Start:"//trim(start_t%as_string())
+            print*, "End:"//trim(end_t%as_string())
         endif
 
         call find_point_in_files(this, start_t, start_file, start_step, find_before=.False.)
@@ -143,13 +143,19 @@ contains
         type(Time_type) :: start_t, end_t
         integer :: start_step, start_file, end_step, end_file
 
+        if (this%start_exclude /= -1) then
+            print*, "ERROR: can not add two exlusion periods to the same time_period object."
+            print*, "or add the same exclusion period twice. Modify code to prevent this. "
+            stop "Feature not implemented"
+        endif
+
         call start_t%set(start_time)
         call end_t%set(end_time)
 
         if (end_t < start_t) then
             print*, "ERROR, start of time period is after end of time period"
-            print("Start:"//trim(start_t%as_string()))
-            print("End:"//trim(end_t%as_string()))
+            print*, "Start:"//trim(start_t%as_string())
+            print*, "End:"//trim(end_t%as_string())
         endif
 
         call find_point_in_files(this, start_t, start_file, start_step, find_before=.False.)
@@ -163,6 +169,8 @@ contains
         this%file_end_exclude = end_file
         this%step_end_exclude = end_step
 
+        this%n_timesteps = this%n_timesteps - (this%end_exclude - this%start_exclude + 1)
+
     end subroutine exclude_period
 
 
@@ -172,6 +180,12 @@ contains
             double precision, allocatable :: times(:)
 
             integer :: i
+
+            if (this%start_exclude /= -1) then
+                print*, "ERROR: can not get times for an object that is excluding some time period. "
+                print*, "add logic to skip exclusion time period(?) to get_times function in time_period.f90."
+                stop "Feature not implemented"
+            endif
 
             allocate(times(this%n_timesteps))
             do i=1,this%n_timesteps
