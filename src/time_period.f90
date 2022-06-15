@@ -157,7 +157,6 @@ contains
 
         this%start_exclude = this%file_start_points(start_file) + start_step - 1
         this%end_exclude = this%file_start_points(end_file) + end_step - 1
-        ! this%n_timesteps = this%end_point - this%start_point + 1
 
         this%file_start_exclude = start_file
         this%step_start_exclude = start_step
@@ -255,7 +254,7 @@ contains
         logical :: in_exclusion
         integer :: global_step
 
-        global_step = this%file_start_points(file) + step
+        global_step = this%file_start_points(file) + step - 1
 
         in_exclusion = (global_step >= this%start_exclude).and.(global_step <= this%end_exclude)
 
