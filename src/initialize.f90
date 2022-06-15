@@ -16,6 +16,7 @@ module initialization
         CHARACTER(len=kMAX_FILE_LENGTH) :: cor_start, cor_end
         CHARACTER(len=kMAX_FILE_LENGTH) :: outputfile
         integer :: n_segments
+        logical :: exclude_correction
     end type parameters_t
 
 
@@ -60,7 +61,8 @@ contains
                             ref_end     = esm_options%ref_end,      & !"1985-12-31 00:00:00",  &
                             cor_start   = esm_options%cor_start,    & !"1980-01-01 00:00:00",&
                             cor_end     = esm_options%cor_end,      & !"1980-12-31 00:00:00",  &
-                            n_segments  = esm_options%n_segments)  !100)
+                            n_segments  = esm_options%n_segments,   & !100)
+                            exclude_correction = esm_options%exclude_correction)
 
         call io_read(ref_options%filenames(1), ref_options%lat_name, lat)
         call io_read(ref_options%filenames(1), ref_options%lon_name, lon)
@@ -140,9 +142,11 @@ contains
                                            ref_start, ref_end, cor_start, cor_end, &
                                            outputfile, filelist
         integer :: n_segments, nvars, i, name_unit
+        logical :: exclude_correction
 
         namelist /ESM_parameters/ filelist, varnames, z_name, lat_name, lon_name, time_name, &
-                                        ref_start, ref_end, cor_start, cor_end, n_segments, outputfile
+                                        ref_start, ref_end, cor_start, cor_end, n_segments, outputfile, &
+                                        exclude_correction
 
         namelist /reference_parameters/ filelist, varnames, z_name, lat_name, lon_name, time_name, &
                                         ref_start, ref_end, cor_start, cor_end, n_segments, outputfile
@@ -162,6 +166,7 @@ contains
         cor_end="1980-12-31 00:00:00"
         n_segments=100
         outputfile="output.nc"
+        exclude_correction=.False.
 
 
         ! read namelists
@@ -203,6 +208,7 @@ contains
         parameters%cor_end = cor_end
         parameters%n_segments = n_segments
         parameters%outputfile = outputfile
+        parameters%exclude_correction = exclude_correction
 
     end function read_config
 
