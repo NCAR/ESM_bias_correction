@@ -16,6 +16,11 @@ module time_periods
         ! keep a netcdf fileID for the reference data so we don't keep re-opening and closing the netcdf file?
         integer :: ncid
 
+        ! if the time period should exclude some section (e.g. a validation period)
+        integer :: start_exclude, end_exclude
+        integer :: file_start_exclude, step_start_exclude
+        integer :: file_end_exclude, step_end_exclude
+
         integer, ALLOCATABLE, DIMENSION(:) :: steps_per_file
         integer, ALLOCATABLE, DIMENSION(:) :: file_start_points
         integer :: start_point, end_point
@@ -30,6 +35,8 @@ module time_periods
     contains
         procedure, public  :: init => init
         procedure, public  :: find_period => find_period
+        procedure, public  :: exclude_period => exclude_period
+        procedure, public  :: should_exclude => should_exclude
         procedure, public  :: next => next
         procedure, public  :: current => current
         procedure, public  :: reset_counter => reset_counter
@@ -86,6 +93,13 @@ contains
 
         this%geo => NULL()
 
+        this%start_exclude = -1
+        this%end_exclude = -1
+        this%file_start_exclude = -1
+        this%step_start_exclude = -1
+        this%file_end_exclude = -1
+        this%step_end_exclude = -1
+
     end subroutine init
 
 
@@ -102,8 +116,8 @@ contains
 
         if (end_t < start_t) then
             print*, "ERROR, start of time period is after end of time period"
-            print("Start:"//trim(start_t%as_string()))
-            print("End:"//trim(end_t%as_string()))
+            print*, "Start:"//trim(start_t%as_string())
+            print*, "End:"//trim(end_t%as_string())
         endif
 
         call find_point_in_files(this, start_t, start_file, start_step, find_before=.False.)
@@ -121,12 +135,57 @@ contains
 
     end subroutine find_period
 
+    subroutine exclude_period(this, start_time, end_time)
+        implicit none
+        class(time_period_data_t), intent(inout) :: this
+        character(len=*), intent(in) :: start_time, end_time
+
+        type(Time_type) :: start_t, end_t
+        integer :: start_step, start_file, end_step, end_file
+
+        if (this%start_exclude /= -1) then
+            print*, "ERROR: can not add two exlusion periods to the same time_period object."
+            print*, "or add the same exclusion period twice. Modify code to prevent this. "
+            stop "Feature not implemented"
+        endif
+
+        call start_t%set(start_time)
+        call end_t%set(end_time)
+
+        if (end_t < start_t) then
+            print*, "ERROR, start of time period is after end of time period"
+            print*, "Start:"//trim(start_t%as_string())
+            print*, "End:"//trim(end_t%as_string())
+        endif
+
+        call find_point_in_files(this, start_t, start_file, start_step, find_before=.False.)
+        call find_point_in_files(this, end_t, end_file, end_step, find_before=.True.)
+
+        this%start_exclude = this%file_start_points(start_file) + start_step - 1
+        this%end_exclude = this%file_start_points(end_file) + end_step - 1
+
+        this%file_start_exclude = start_file
+        this%step_start_exclude = start_step
+        this%file_end_exclude = end_file
+        this%step_end_exclude = end_step
+
+        this%n_timesteps = this%n_timesteps - (this%end_exclude - this%start_exclude + 1)
+
+    end subroutine exclude_period
+
+
     function get_times(this) result(times)
             implicit none
             class(time_period_data_t), intent(in) :: this
             double precision, allocatable :: times(:)
 
             integer :: i
+
+            if (this%start_exclude /= -1) then
+                print*, "ERROR: can not get times for an object that is excluding some time period. "
+                print*, "add logic to skip exclusion time period(?) to get_times function in time_period.f90."
+                stop "Feature not implemented"
+            endif
 
             allocate(times(this%n_timesteps))
             do i=1,this%n_timesteps
@@ -201,6 +260,20 @@ contains
 
     end subroutine find_point_in_files
 
+    function should_exclude(this, step, file) result(in_exclusion)
+        implicit none
+        class(time_period_data_t), intent(inout) :: this
+        integer, intent(in) :: step, file
+
+        logical :: in_exclusion
+        integer :: global_step
+
+        global_step = this%file_start_points(file) + step - 1
+
+        in_exclusion = (global_step >= this%start_exclude).and.(global_step <= this%end_exclude)
+
+    end function
+
     !>------------------------
     !> load next time step for variable
     !>
@@ -214,19 +287,37 @@ contains
         character(len=*), intent(in) :: varname
         real, DIMENSION(:,:,:), ALLOCATABLE :: output_data
 
-        associate(step => this%step, file=>this%file)
-            step = step + 1
+        if (this%start_exclude == -1) then
+            associate(step => this%step, file=>this%file)
+                step = step + 1
 
-            if (step > this%steps_per_file(file)) then
-                print*, trim(this%files(file))
-                file = file + 1
-                step = 1
-                if (file > size(this%files)) then
-                    write(*,*) "ERROR: looking for data past the end of the available data"
-                    error stop
+                if (step > this%steps_per_file(file)) then
+                    print*, trim(this%files(file))
+                    file = file + 1
+                    step = 1
+                    if (file > size(this%files)) then
+                        write(*,*) "ERROR: looking for data past the end of the available data"
+                        error stop
+                    endif
                 endif
-            endif
-        end associate
+            end associate
+        else
+            associate(step => this%step, file=>this%file)
+                do while (this%should_exclude(step, file))
+                    step = step + 1
+
+                    if (step > this%steps_per_file(file)) then
+                        print*, trim(this%files(file))
+                        file = file + 1
+                        step = 1
+                        if (file > size(this%files)) then
+                            write(*,*) "ERROR: looking for data past the end of the available data"
+                            error stop
+                        endif
+                    endif
+                enddo
+            end associate
+        endif
 
         output_data = this%current(varname)
     end function next

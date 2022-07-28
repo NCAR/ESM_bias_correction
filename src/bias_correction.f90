@@ -23,6 +23,8 @@ program esm_bias_correction
     print*, "esm%generate_mean_calculations_for(reference)"
     call esm%generate_mean_calculations_for(reference)
 
+    call esm%add_exclusions()
+
     do v = 1, esm%n_variables
 
         print*, "call esm%generate_bc_with", v

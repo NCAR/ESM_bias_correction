@@ -34,6 +34,10 @@ module atmosphere_dataset
 
         character(len=kMAX_VARNAME_LENGTH) :: z_name, lat_name, lon_name, time_name
 
+        CHARACTER(len=kMAX_VARNAME_LENGTH) :: ref_start, ref_end
+        CHARACTER(len=kMAX_VARNAME_LENGTH) :: cor_start, cor_end
+        logical :: exclude_correction
+
     contains
         procedure, public  :: init => init
         procedure, public  :: initialize_geo_data => initialize_geo_data
@@ -43,11 +47,12 @@ module atmosphere_dataset
         procedure, public  :: load_reference_period => load_reference_period
         procedure, public  :: apply_bc => apply_bc
         procedure, public  :: get_output_times
+        procedure, public  :: add_exclusions
     end type atm_t
 
 contains
     subroutine init(this, filenames, varnames, z_name, lat_name, lon_name, time_name, &
-                    ref_start, ref_end, cor_start, cor_end, n_segments)
+                    ref_start, ref_end, cor_start, cor_end, n_segments, exclude_correction)
         implicit none
         class(atm_t), intent(inout) :: this
         CHARACTER(len=*), intent(in) :: filenames(:)
@@ -57,6 +62,7 @@ contains
         CHARACTER(len=*), intent(in) :: ref_start, ref_end
         CHARACTER(len=*), intent(in) :: cor_start, cor_end
         integer, intent(in) :: n_segments
+        logical, optional, intent(in) :: exclude_correction
 
         integer :: i
         integer :: dims(io_maxDims)
@@ -71,6 +77,13 @@ contains
         this%lat_name = lat_name
         this%lon_name = lon_name
         this%time_name = time_name
+
+        this%ref_start = ref_start
+        this%ref_end = ref_end
+        this%cor_start = cor_start
+        this%cor_end = cor_end
+        this%exclude_correction = .False.
+        if (present(exclude_correction)) this%exclude_correction = exclude_correction
 
         this%geo => NULL()
         this%z_data => NULL()
@@ -104,6 +117,15 @@ contains
 
     end subroutine init
 
+    subroutine add_exclusions(this)
+        implicit none
+        class(atm_t), intent(inout) :: this
+
+        if (this%exclude_correction) then
+            call this%reference%exclude_period(this%cor_start, this%cor_end)
+        endif
+
+    end subroutine add_exclusions
 
     subroutine initialize_geo_data(this)
         implicit none

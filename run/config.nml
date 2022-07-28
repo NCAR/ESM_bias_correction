@@ -21,6 +21,7 @@
 
     n_segments=100
     outputfile="output/bias_corrected.nc"
+    exclude_correction = False
 /
 
 &reference_parameters
