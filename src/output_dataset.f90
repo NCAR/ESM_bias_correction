@@ -37,8 +37,6 @@ contains
         character(len=*), intent(in) :: start_time
         real, intent(in) :: z(:,:,:), lat(:), lon(:)
 
-        integer :: i
-
         ! fourth dimension is hard coded as time
         dims(4) = NF90_UNLIMITED
         this%dims = dims
@@ -154,9 +152,6 @@ contains
         character(len=kMAX_FILE_LENGTH) :: filename
         integer :: ncid
 
-        ! We are writing 4D data, assume a nx x nz x ny x nr grid.
-        integer :: nx,ny,nz,nr
-
         ! This will be the netCDF ID for the file and data variable.
         integer :: varid
 
@@ -202,9 +197,6 @@ contains
 
         character(len=kMAX_FILE_LENGTH) :: filename
         integer :: ncid
-
-        ! We are writing 3D data, assume a nx x nz x ny x nr grid.
-        integer :: nx,ny,nz
 
         ! This will be the netCDF ID for the file and data variable.
         integer :: varid
