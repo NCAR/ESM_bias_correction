@@ -303,7 +303,21 @@ contains
             end associate
         else
             associate(step => this%step, file=>this%file)
-                do while (this%should_exclude(step, file))
+                if (this%should_exclude(step, file)) then
+                    do while (this%should_exclude(step, file))
+                        step = step + 1
+
+                        if (step > this%steps_per_file(file)) then
+                            print*, trim(this%files(file))
+                            file = file + 1
+                            step = 1
+                            if (file > size(this%files)) then
+                                write(*,*) "ERROR: looking for data past the end of the available data"
+                                error stop
+                            endif
+                        endif
+                    enddo
+                else
                     step = step + 1
 
                     if (step > this%steps_per_file(file)) then
@@ -315,7 +329,7 @@ contains
                             error stop
                         endif
                     endif
-                enddo
+                endif
             end associate
         endif
 

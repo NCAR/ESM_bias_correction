@@ -222,7 +222,7 @@ contains
         implicit none
         integer, intent(in) :: year, month, day, hour, minute, second
         double precision :: julian_day
-        double precision :: d,m,y
+        double precision :: m,y
         integer :: a,b
 
         a = (14-month)/12
@@ -582,7 +582,6 @@ contains
         character(len=*), intent(in), optional :: input_format
         character(len=MAXSTRINGLENGTH) :: pretty_string
         character(len=MAXSTRINGLENGTH) :: format
-        integer :: i
 
         associate(year  => this%year,   &
                   month => this%month,  &
