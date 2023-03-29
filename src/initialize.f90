@@ -1,7 +1,7 @@
 module initialization
     use atmosphere_dataset, only: atm_t
     use output_dataset,     only: output_t
-    use io_routines,        only: io_read, io_newunit
+    use io_routines,        only: io_read, io_newunit, io_read_esm_times
     use string,             only: str
     use constants
 
@@ -34,10 +34,14 @@ contains
         integer, allocatable, dimension(:) :: dim_sizes
         type(parameters_t) :: ref_options, esm_options
 
+        double precision, allocatable, dimension(:) :: esm_times
+
         options_file = get_options_file()
         ref_options = read_config(options_file,"r")
         esm_options = read_config(options_file,"e")
 
+        print*, "  "
+        print*, " - - - - - - initializing REFERENCE  - - - - - - "
         call reference%init(filenames   = ref_options%filenames,    & !ref_files,            &
                             varnames    = ref_options%varnames,     & !["qv"],                &
                             z_name      = ref_options%z_name,       & !"z",                     &
@@ -51,6 +55,8 @@ contains
                             n_segments  = ref_options%n_segments) !100)
 
         ! initialize the ESM dataset
+        print*, "  "
+        print*, " - - - - - - initializing ESM  - - - - - - "
         call esm%init(      filenames   = esm_options%filenames,    & !ref_files,            &
                             varnames    = esm_options%varnames,     & !["qv"],                &
                             z_name      = esm_options%z_name,       & !"z",                     &
@@ -68,6 +74,19 @@ contains
         call io_read(ref_options%filenames(1), ref_options%lon_name, lon)
         call io_read(ref_options%filenames(1), ref_options%z_name, z)
 
+
+        ! Here we copy the (encoded) time from the input ESM, and crop it to the desired length.
+        ! This allows for discontinuous time (e.g. all january's) to be processed and written correctly
+        ! modified 2023/03/29 BK
+        call io_read_esm_times(esm_options%filenames(1), esm_times) ! gets the entire time variable (encoded) as esm_times
+        print*, "  "
+        print*, " input esm time shape ", shape(esm_times)
+        ! print*, " output time shape: ", shape(esm_times(esm%correction%step_start: esm%correction%step_end))
+        ! print*, " first esm_time value: ", esm_times(esm%correction%step_start)  ! not very insightful
+        print*, "esm%correction%start_step, esm%correction%end_step: ", esm%correction%step_start, esm%correction%step_end
+        ! print*,         ! esm%correction%times%date ! can we print the out_times(1) and (-1) in human format? how?
+
+
         nx = size(lon)
         ny = size(lat)
         nz = size(z,3)
@@ -78,7 +97,8 @@ contains
                         esm_options%varnames,               &
                         dim_sizes,                          &
                         [" lon", " lat", " lev","time"],    &
-                        esm_options%cor_start, z, lat, lon)
+                        esm_options%cor_start, z, lat, lon, &
+                        esm_times(esm%correction%step_start: esm%correction%step_end)) ! <- here we crop the esm time to desired output
 
 
     end subroutine init

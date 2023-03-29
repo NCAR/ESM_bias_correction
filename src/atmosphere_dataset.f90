@@ -93,10 +93,12 @@ contains
 
         ! initialize the reference and correction time periods
         ! for the reference dataset, the correction period doesnt matter
+        ! print*, "- - - - Reference period: - - - -"
         call this%reference%init(filenames, time_name)
         call this%reference%find_period(ref_start, ref_end)
 
-        call this%correction%init(filenames, time_name)
+        ! print*, "- - - - Correction period: - - - -"
+        call this%correction%init(filenames, time_name) ! prints the "Number of timesteps found dataset:"
         call this%correction%find_period(cor_start, cor_end)
 
         ! read the dimensions of all variables from the first file
@@ -217,6 +219,7 @@ contains
         times = this%correction%get_times()
 
     end function get_output_times
+
 
 
     !>----------------------

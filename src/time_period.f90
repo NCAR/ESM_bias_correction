@@ -133,6 +133,10 @@ contains
         this%step_end = end_step
         this%dt = this%times(2) - this%times(1)
 
+
+
+
+
     end subroutine find_period
 
     subroutine exclude_period(this, start_time, end_time)

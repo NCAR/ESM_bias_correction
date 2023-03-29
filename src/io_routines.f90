@@ -129,6 +129,29 @@ contains
         deallocate(time_data)
     end function io_nearest_time_step
 
+    !
+    !
+    !
+
+        ! ! function can go back in io_routines
+    subroutine io_read_esm_times(filename, time_data) ! time_date is returned to initialize as esm_times
+        character(len=*),intent(in) :: filename
+        ! double precision, intent(in) :: mjd
+        double precision, allocatable, dimension(:) :: time_data
+        integer :: ncid,varid,dims(1),ntimes,i
+
+        call check(nf90_open(filename, NF90_NOWRITE, ncid),filename)
+        ! Get the varid of the data_in variable, based on its name.
+        call check(nf90_inq_varid(ncid, "time", varid),                 trim(filename)//" : time")
+        call check(nf90_inquire_variable(ncid, varid, dimids = dims),   trim(filename)//" : time dims")
+        call check(nf90_inquire_dimension(ncid, dims(1), len = ntimes), trim(filename)//" : inq time dim")
+
+        allocate(time_data(ntimes))
+        call check(nf90_get_var(ncid, varid, time_data),trim(filename)//"reading time")
+        ! Close the file, freeing all resources.
+        call check( nf90_close(ncid),filename)
+    end subroutine io_read_esm_times
+
 
     !>------------------------------------------------------------
     !! Read the dimensions of a variable in a given netcdf file

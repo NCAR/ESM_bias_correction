@@ -27,7 +27,7 @@ module output_dataset
     end type output_t
 
 contains
-    subroutine init(this, output_file, varnames, dims, dimnames, start_time, z, lat, lon)
+    subroutine init(this, output_file, varnames, dims, dimnames, start_time, z, lat, lon, out_times)
         implicit none
         class(output_t), intent(inout) :: this
         character(len=*), intent(in) :: output_file
@@ -36,6 +36,7 @@ contains
         character(len=*), dimension(:), intent(in) :: dimnames
         character(len=*), intent(in) :: start_time
         real, intent(in) :: z(:,:,:), lat(:), lon(:)
+        double precision, dimension(:), intent(inout) :: out_times
 
         ! fourth dimension is hard coded as time
         dims(4) = NF90_UNLIMITED
@@ -49,8 +50,18 @@ contains
 
         allocate(this%varids(size(varnames)))
 
+        print*, " "
+        print*, " - - - - - - initializing output  - - - - - - "
+
         print*, "Writing to outputfile: ", trim(output_file)
-        call initialize_output_file(output_file, varnames, dimnames, dims, start_time, z, lat, lon, this%ncid, this%varids)
+        call initialize_output_file(output_file, varnames, dimnames, dims, start_time, z, lat, lon, this%ncid, this%varids) 
+
+        !!! copy the esm time directly to output time :
+        ! print*, " "
+        print*, " Writing original esm times to output w. length ", shape(out_times)
+        ! print*, " first time value: ", trim( out_times(1) )
+
+        call write_time(this,  out_times )
 
     end subroutine init
 
@@ -68,7 +79,7 @@ contains
     end subroutine write_time
 
 
-    subroutine initialize_output_file(filename, varnames, dims, dim_sizes, start_time, z, lat, lon, ncid, varids)
+    subroutine initialize_output_file(filename, varnames, dims, dim_sizes, start_time, z, lat, lon, ncid, varids) 
             implicit none
             ! This is the name of the file and variable we will write.
             character(len=*), intent(in) :: filename
@@ -106,10 +117,17 @@ contains
 
             ! setup coordinate variables (don't write time)
             call check( nf90_def_var(ncid, "time", NF90_DOUBLE, dimids(4), temp_varid), trim(filename)//":"//trim("time"))
+            
             ! write the time units attribute to the file
-            call check( nf90_put_att(ncid, temp_varid, "units", "days since "//trim(start_time)), &
-                                    "writing attribute: units to:"//trim(filename))
 
+            !!!! Note that the time encoding (i.e. 'days since') should be the same in ESM input as it is here, 
+            !!!! otherwise timestamps will be wrong!
+            call check( nf90_put_att(ncid, temp_varid, "units", &
+                                     "days since 1900-01-01"), &
+                                     !"hours since "//trim(start_time)), &
+                                    "writing attribute: units to:"//trim(filename))
+            
+            
             ! call check( nf90_put_var(ncid, temp_varid, times), trim(filename)//":"//trim("time"))
 
             call check( nf90_def_var(ncid, "lat", NF90_REAL, dimids(2), temp_varid), trim(filename)//":"//trim("lat"))

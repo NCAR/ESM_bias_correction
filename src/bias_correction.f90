@@ -34,8 +34,14 @@ program esm_bias_correction
         call esm%apply_bc(v, output)
     enddo
 
-    call output%write_time(esm%get_output_times())
+    ! output time is now written on output%init, as a direct copy from esm, but not it's attributes!! (input and output should use days since 1900 !) (BK 2023/03)
+    ! call output%write_time(esm%get_output_times())
+
 
     call output%close()
+
+    print*, " "
+    print*, " - - - - -   Finished ESM bias correction ! - - - - - - "
+    print*, " "
 
 end program esm_bias_correction
