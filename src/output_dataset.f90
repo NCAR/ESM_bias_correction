@@ -27,10 +27,10 @@ module output_dataset
     end type output_t
 
 contains
-    subroutine init(this, output_file, varnames, dims, dimnames, start_time, z, lat, lon, out_times)
+    subroutine init(this, output_file, varnames, dims, dimnames, start_time, z, lat, lon, out_times, calendar_out)
         implicit none
         class(output_t), intent(inout) :: this
-        character(len=*), intent(in) :: output_file
+        character(len=*), intent(in) :: output_file, calendar_out
         character(len=*), dimension(:), intent(in) :: varnames
         integer,          dimension(:), intent(inout) :: dims
         character(len=*), dimension(:), intent(in) :: dimnames
@@ -54,11 +54,12 @@ contains
         print*, " - - - - - - initializing output  - - - - - - "
 
         print*, "Writing to outputfile: ", trim(output_file)
-        call initialize_output_file(output_file, varnames, dimnames, dims, start_time, z, lat, lon, this%ncid, this%varids) 
+        call initialize_output_file(output_file, varnames, dimnames, dims, start_time, z, lat, lon,   &
+                                    this%ncid, this%varids, calendar_out )
 
         !!! copy the esm time directly to output time :
         ! print*, " "
-        print*, " Writing original esm times to output w. length ", shape(out_times)
+        print*, "   Writing original esm times to output w. length ", shape(out_times)
         ! print*, " first time value: ", trim( out_times(1) )
 
         call write_time(this,  out_times )
@@ -79,10 +80,10 @@ contains
     end subroutine write_time
 
 
-    subroutine initialize_output_file(filename, varnames, dims, dim_sizes, start_time, z, lat, lon, ncid, varids) 
+    subroutine initialize_output_file(filename, varnames, dims, dim_sizes, start_time, z, lat, lon, ncid, varids, calendar_out)
             implicit none
             ! This is the name of the file and variable we will write.
-            character(len=*), intent(in) :: filename
+            character(len=*), intent(in) :: filename, calendar_out
             character(len=*), intent(in), dimension(:) :: dims, varnames
             integer, intent(inout), dimension(:) :: dim_sizes
 
@@ -117,7 +118,7 @@ contains
 
             ! setup coordinate variables (don't write time)
             call check( nf90_def_var(ncid, "time", NF90_DOUBLE, dimids(4), temp_varid), trim(filename)//":"//trim("time"))
-            
+
             ! write the time units attribute to the file
 
             !!!! Note that the time encoding (i.e. 'days since') should be the same in ESM input as it is here, 
@@ -126,8 +127,12 @@ contains
                                      "days since 1900-01-01"), &
                                      !"hours since "//trim(start_time)), &
                                     "writing attribute: units to:"//trim(filename))
-            
-            
+
+            ! Set the calendar?
+            print*, '   writing output calendar as ', trim(calendar_out)
+            call check( nf90_put_att(ncid, temp_varid, "calendar", calendar_out), &
+                                   "writing attribute: calendar to:"//trim(filename))
+
             ! call check( nf90_put_var(ncid, temp_varid, times), trim(filename)//":"//trim("time"))
 
             call check( nf90_def_var(ncid, "lat", NF90_REAL, dimids(2), temp_varid), trim(filename)//":"//trim("lat"))

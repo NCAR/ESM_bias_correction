@@ -194,6 +194,9 @@ contains
             calendar = "standard"
         endif
 
+        ! ! BK test:
+        ! print*, 'calendar in file ', trim(filename), ' is ', trim(calendar)
+
         ! attempt to read the units for this time variable
         call io_read_attribute(trim(filename), "units", units, var_name=trim(varname), error=error)
 

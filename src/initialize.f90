@@ -27,6 +27,7 @@ contains
         type(output_t), intent(inout) :: output
 
         character(len=kMAX_FILE_LENGTH) :: options_file
+        CHARACTER(len=kMAX_VARNAME_LENGTH) :: calendar
 
         real, allocatable, dimension(:) :: lat, lon
         real, allocatable, dimension(:,:,:) :: z
@@ -78,9 +79,11 @@ contains
         ! Here we copy the (encoded) time from the input ESM, and crop it to the desired length.
         ! This allows for discontinuous time (e.g. all january's) to be processed and written correctly
         ! modified 2023/03/29 BK
-        call io_read_esm_times(esm_options%filenames(1), esm_times) ! gets the entire time variable (encoded) as esm_times
+        call io_read_esm_times(esm_options%filenames(1), esm_times, calendar, esm_options%time_name) ! gets the entire time variable (encoded) as esm_times
+        ! call io_read_esm_times(esm_options%filenames(1), esm_times) ! gets the entire time variable (encoded) as esm_times
         print*, "  "
-        print*, " input esm time shape ", shape(esm_times)
+        print*, "input esm time shape ", shape(esm_times)
+        print*, 'input esm calendar type ', trim(calendar)
         ! print*, " output time shape: ", shape(esm_times(esm%correction%step_start: esm%correction%step_end))
         ! print*, " first esm_time value: ", esm_times(esm%correction%step_start)  ! not very insightful
         print*, "esm%correction%start_step, esm%correction%end_step: ", esm%correction%step_start, esm%correction%step_end
@@ -93,13 +96,13 @@ contains
 
         dim_sizes = [ nx, ny, nz, 0]
 
-        call output%init(ref_options%outputfile,            &
-                        esm_options%varnames,               &
-                        dim_sizes,                          &
-                        [" lon", " lat", " lev","time"],    &
-                        esm_options%cor_start, z, lat, lon, &
-                        esm_times(esm%correction%step_start: esm%correction%step_end)) ! <- here we crop the esm time to desired output
-
+        call output%init(ref_options%outputfile,                                        &
+                        esm_options%varnames,                                           &
+                        dim_sizes,                                                      &
+                        [" lon", " lat", " lev","time"],                                &
+                        esm_options%cor_start, z, lat, lon,                             &
+                        esm_times(esm%correction%step_start: esm%correction%step_end),   & ! <- here we crop the esm time to desired output
+                        calendar )
 
     end subroutine init
 
