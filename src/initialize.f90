@@ -75,21 +75,47 @@ contains
         call io_read(ref_options%filenames(1), ref_options%lon_name, lon)
         call io_read(ref_options%filenames(1), ref_options%z_name, z)
 
+        if (esm%correction%file_start .ne. esm%correction%file_end) then
+            print*, "  "
+            print*, "revise time output method, not in same file"
+            print*, "  Stopping  "
+            ERROR STOP
+
+        endif
 
         ! Here we copy the (encoded) time from the input ESM, and crop it to the desired length.
         ! This allows for discontinuous time (e.g. all january's) to be processed and written correctly
         ! modified 2023/03/29 BK
-        call io_read_esm_times(esm_options%filenames(1), esm_times, calendar, esm_options%time_name) ! gets the entire time variable (encoded) as esm_times
-        ! call io_read_esm_times(esm_options%filenames(1), esm_times) ! gets the entire time variable (encoded) as esm_times
-        print*, "  "
+        call io_read_esm_times(esm_options%filenames(esm%correction%file_start), esm_times, calendar, esm_options%time_name) ! gets the entire time variable (encoded) as esm_times
+
+
+        print*, " "
+        ! print*, " esm_options%filenames(1) ",trim(esm_options%filenames(1) )
+        ! print*, " esm_options%filenames(2) ",trim( esm_options%filenames(2) )
         print*, "input esm time shape ", shape(esm_times)
-        print*, 'input esm calendar type ', trim(calendar)
-        ! print*, " output time shape: ", shape(esm_times(esm%correction%step_start: esm%correction%step_end))
+        ! print*, 'input esm calendar type ', trim(calendar)
+        print*, " esm%correction%step_start ", esm%correction%step_start   ! Step within the file
+        ! print*, " esm%correction%start_point ", esm%correction%start_point ! Step within the entire time - same if only one file
+
+        print*, " esm%correction%step_end ", esm%correction%step_end   ! Step within the file
+        ! print*, " esm%correction%end_point ", esm%correction%end_point ! Step within the entire time - same if only one file
+
+        ! print*, " esm%correction%file_start ", esm%correction%file_start   
+        ! print*, " esm%correction%file_end ", esm%correction%file_end       
+
+        ! print*, " esm%correction%times(esm%correction%step_start) ", esm%correction%times(esm%correction%step_start)%as_string()
+        ! print*, " esm%correction%times(esm%correction%start_point) ", esm%correction%times(esm%correction%start_point)%as_string()
+        ! print*, " esm%correction%times(esm%correction%step_end) ", esm%correction%times(esm%correction%step_end)%as_string()
+        ! print*, " esm%correction%times(esm%correction%end_point) ", esm%correction%times(esm%correction%end_point)%as_string()
+
+        print*, " output time shape: ", shape(esm_times(esm%correction%step_start: esm%correction%step_end))
         ! print*, " first esm_time value: ", esm_times(esm%correction%step_start)  ! not very insightful
-        print*, "esm%correction%start_step, esm%correction%end_step: ", esm%correction%step_start, esm%correction%step_end
-        ! print*,         ! esm%correction%times%date ! can we print the out_times(1) and (-1) in human format? how?
+        print*, "esm%correction%start_step, esm%correction%step_end: ", esm%correction%step_start, esm%correction%step_end
+        ! print*, "esm%correction%start_point, esm%correction%end_point: ", esm%correction%start_point, esm%correction%end_point
 
+        ! print*," this%times(this%start_point)%as_string()",  trim(this%times(this%start_point)%as_string())
 
+        
         nx = size(lon)
         ny = size(lat)
         nz = size(z,3)

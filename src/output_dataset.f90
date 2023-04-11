@@ -128,7 +128,7 @@ contains
                                      !"hours since "//trim(start_time)), &
                                     "writing attribute: units to:"//trim(filename))
 
-            ! Set the calendar?
+            ! Set the calendar
             print*, '   writing output calendar as ', trim(calendar_out)
             call check( nf90_put_att(ncid, temp_varid, "calendar", calendar_out), &
                                    "writing attribute: calendar to:"//trim(filename))
