@@ -16,6 +16,7 @@
 !!------------------------------------------------------------
 module io_routines
     use netcdf
+    use constants
 
     implicit none
     ! maximum number of dimensions for a netCDF file
@@ -128,6 +129,53 @@ contains
         end do
         deallocate(time_data)
     end function io_nearest_time_step
+
+    !>------------------------------------------------------------
+    !!
+    !! This function reads the time variable from the input ESM, so it can be
+    !!     copied to the output file directly.
+    !!
+    !!   This can probably be incorporated more elegantly.
+    !!
+    !! 2023-03 addition by Bert Kruyt.
+    !!
+    !>------------------------------------------------------------
+
+    subroutine io_read_esm_times(filename, time_data, calendar, time_var_name)
+        character(len=*),intent(in) :: filename, time_var_name
+        character(len=kMAX_VARNAME_LENGTH), intent(out) :: calendar
+        ! double precision, intent(in) :: mjd
+        double precision, allocatable, dimension(:) :: time_data
+        integer :: ncid,varid,dims(1),ntimes,i, error
+        ! character(len=MAXSTRINGLENGTH) :: calendar, varname
+
+
+
+        call check(nf90_open(filename, NF90_NOWRITE, ncid),filename)
+        ! Get the varid of the data_in variable, based on its name.
+        call check(nf90_inq_varid(ncid, "time", varid),                 trim(filename)//" : time")
+        call check(nf90_inquire_variable(ncid, varid, dimids = dims),   trim(filename)//" : time dims")
+        call check(nf90_inquire_dimension(ncid, dims(1), len = ntimes), trim(filename)//" : inq time dim")
+
+        ! Get calendar ?
+
+        ! attempt to read the calendar attribute from the time variable
+        call io_read_attribute(trim(filename),"calendar", calendar, var_name=trim(time_var_name), error=error)
+        ! if time attribute it not present, set calendar to one specified in the config file
+        if (error/=0) then
+            write(*,*) "WARNING: assuming standard/gregorian calendar for file "//trim(filename)
+            calendar = "standard"
+        endif
+        
+        ! ! BK test:
+        ! print*, ' '
+        ! print*, 'calendar in file ', trim(filename), ' is ', trim(calendar)
+
+        allocate(time_data(ntimes))
+        call check(nf90_get_var(ncid, varid, time_data),trim(filename)//"reading time")
+        ! Close the file, freeing all resources.
+        call check( nf90_close(ncid),filename)
+    end subroutine io_read_esm_times
 
 
     !>------------------------------------------------------------

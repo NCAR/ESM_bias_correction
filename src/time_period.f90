@@ -114,6 +114,8 @@ contains
         call start_t%set(start_time)
         call end_t%set(end_time)
 
+        ! print*, "Start:"//trim(start_t%as_string())
+        ! print*, "End:"//trim(end_t%as_string())
         if (end_t < start_t) then
             print*, "ERROR, start of time period is after end of time period"
             print*, "Start:"//trim(start_t%as_string())
@@ -121,17 +123,28 @@ contains
         endif
 
         call find_point_in_files(this, start_t, start_file, start_step, find_before=.False.)
+        ! print*, " start_file, start_step",start_file, start_step
         call find_point_in_files(this, end_t, end_file, end_step, find_before=.True.)
+        ! print*, " end_file, end_step", end_file, end_step
 
-        this%start_point = this%file_start_points(start_file) + start_step - 1
+        this%start_point = this%file_start_points(start_file) + start_step - 1 ! Step within the entire time - same if only one file
         this%end_point = this%file_start_points(end_file) + end_step - 1
         this%n_timesteps = this%end_point - this%start_point + 1
 
         this%file_start = start_file
-        this%step_start = start_step
+        this%step_start = start_step   ! Step within the file
         this%file_end = end_file
         this%step_end = end_step
         this%dt = this%times(2) - this%times(1)
+
+        ! ! # corrrect:
+        ! print*," this%times(this%start_point)%as_string()",  trim(this%times(this%start_point)%as_string())
+        ! print*,"   this%times( this%end_point)%as_string()",  trim(this%times( this%end_point)%as_string())
+        ! ! not correct:
+        ! print*," this%times(this%step_start)%as_string()",  trim(this%times(this%step_start)%as_string())
+        ! print*,"   this%times( this%step_end)%as_string()",  trim(this%times( this%step_end)%as_string())
+
+
 
     end subroutine find_period
 
@@ -209,9 +222,17 @@ contains
         file = 1
         step = -1
 
+        ! print*, "this%file_start_points(file)", this%file_start_points(file)
+        ! print*, "this%steps_per_file(file) ",this%steps_per_file(file)
         i=1
         fileend = this%file_start_points(file) + this%steps_per_file(file) - 1
-
+        ! print*, "fileend ", fileend
+        
+        ! print*," this%times(i)%year_zero",  this%times(i)%year_zero
+        ! print*," this%times(i)%calendar",  this%times(i)%calendar
+        
+        
+        
         do while (.not.found)
             ! if we are off the end of the current file, look at the next file
             if (fileend < i) then
@@ -256,7 +277,6 @@ contains
             endif
             step = i - this%file_start_points(file) + 1
         endif
-
 
     end subroutine find_point_in_files
 
